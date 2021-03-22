@@ -1,0 +1,118 @@
+version: "3"
+
+networks:
+  d.net:
+    driver: bridge
+
+services:
+###########
+ # service php / apache utilisant un vhost dont le nom est celui de la machine hôte
+ #
+ #  le service sera accessible à https://docketu.iutnc.univ-lorraine.fr:14001
+###########
+
+  back1:
+    image: canals/php:latest
+    environment:
+      - VHOST_HOSTNAME=docketu.iutnc.univ-lorraine.fr
+      - VHOST_DOCROOT=/var/www/web
+      - http_proxy=http://www-cache.iutnc.univ-lorraine.fr:3128
+      - https_proxy=http://www-cache.iutnc.univ-lorraine.fr:3128
+    ports:
+      - "14000:80"
+      - "14001:443"
+    volumes:
+      - ./backend1/public:/var/www/web
+      - ./backend1/src:/var/www/src
+    working_dir: /var/www/src
+    networks:
+      - d.net
+    links:
+      - mysql:db
+
+###########
+# service php / apache utilisant le vhost par défaut
+#
+#  le service sera accessible à https://docketu.iutnc.univ-lorraine.fr:19143
+###########
+  back2:
+    image: canals/php:latest
+    environment:
+      - http_proxy=http://www-cache.iutnc.univ-lorraine.fr:3128
+      - https_proxy=http://www-cache.iutnc.univ-lorraine.fr:3128
+    ports:
+    - "14002:80"
+    - "14003:443"
+    volumes:
+    - ./backend2/public:/var/www/html
+    - ./backend2/src:/var/www/src
+    working_dir: /var/www/src
+    networks:
+    - d.net
+    links:
+    - mysql:db
+
+###############
+#  service apache pour la webapp front
+#  service accessible sur http://docketu.iutnc.univ-lorraine.fr:19280
+###############
+
+  webfront:
+    image: httpd:latest
+    environment:
+      - http_proxy=http://www-cache.iutnc.univ-lorraine.fr:3128
+      - https_proxy=http://www-cache.iutnc.univ-lorraine.fr:3128
+    ports:
+      - "14004:80"
+    volumes:
+      - ./front/public:/usr/local/apache2/htdocs
+    working_dir: /usr/local/apache2/htdocs
+    networks:
+      - d.net
+
+
+#############################
+# mysql + phpmyadmin
+#############################
+  mysql:
+    image: mariadb:latest
+    command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8 --collation-server=utf8_general_ci
+    environment:
+      - MYSQL_ROOT_PASSWORD=root123
+      - MYSQL_USER=com
+      - MYSQL_PASSWORD=com
+      - MYSQL_DATABASE=com
+    volumes :
+      - ./backend1/sql:/var/sql
+    networks:
+      - d.net
+
+  myadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    ports:
+      - "14999:80"
+    links:
+      - mysql:db
+    networks:
+      - d.net
+
+################################################
+# mongodb & mongo-express
+###############################################
+  # mongo:
+  #   image: mongo:latest
+  #   volumes:
+  #   - ./backend2/data:/var/data
+  #   working_dir: /var/data
+  #   networks:
+  #   - d.net
+
+
+  # mongo-express:
+  #   image: mongo-express:latest
+  #   networks:
+  #   - d.net
+  #   ports:
+  #   - "19781:8081"
+  #   links:
+  #   - mongo:mongo
