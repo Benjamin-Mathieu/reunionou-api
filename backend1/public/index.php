@@ -14,7 +14,7 @@ use \atelier\api\middlewares\Cors;
 $c = new \Slim\Container(array_merge($config_slim, $errors));
 $app = new \Slim\App($c);
 ########################Route User#################################
-$app->get('/signIn', ControllerUser::class.':signIn')
+$app->post('/signIn', ControllerUser::class.':signIn')
     ->add(Cors::class.':verificationAjoutHeader');
 
 $app->post('/signUp', ControllerUser::class.':signUp')
