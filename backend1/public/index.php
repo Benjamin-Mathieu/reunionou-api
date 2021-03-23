@@ -15,11 +15,11 @@ use \atelier\api\middlewares\Cors;
 $c = new \Slim\Container(array_merge($config_slim, $errors));
 $app = new \Slim\App($c);
 ########################Routes User#################################
-$app->post('/signIn[/]', ControllerUser::class.':signIn')
-    ->add(Cors::class.':verificationAjoutHeader');
+$app->post('/signIn[/]', ControllerUser::class.':signIn');
+    //->add(Cors::class.':verificationAjoutHeader');
 
-$app->post('/signUp[/]', ControllerUser::class.':signUp')
-    ->add(Cors::class.':verificationAjoutHeader');
+$app->post('/signUp[/]', ControllerUser::class.':signUp');
+    //->add(Cors::class.':verificationAjoutHeader');
 
 ###################################################################
 #######################Routes Events##############################
@@ -27,11 +27,12 @@ $app->get('/events[/]', ControllerEvent::class.':getEvents');
     //->add(Cors::class.':verificationAjoutHeader');
 
 $app->get('/events/{id}[/]', ControllerEvent::class.':getEvent')
-    ->add(Cors::class.':verificationAjoutHeader')
+    //->add(Cors::class.':verificationAjoutHeader')
     ->setName('getEvent');
-
-$app->post('/events[/]', ControllerEvent::class.':createEvent')
-    ->add(Cors::class.':verificationAjoutHeader');
+$app->put('/events/{id}[/]', ControllerEvent::class.':modifEvent');
+    //->add(Cors::class.':verificationAjoutHeader');
+$app->post('/events[/]', ControllerEvent::class.':createEvent');
+    //->add(Cors::class.':verificationAjoutHeader');
 
 
 $app->options('/{routes:.+}', function ($request, $response, $args) {
