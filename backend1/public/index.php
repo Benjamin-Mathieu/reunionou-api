@@ -10,14 +10,14 @@ $db->addConnection($config_slim['settings']['dbconf']); /* configuration avec no
 $db->setAsGlobal();              /* rendre la connexion visible dans tout le projet */
 $db->bootEloquent();             /* établir la connexion */
 use \atelier\api\controllers\ControllerUser;
-use \lbs\fidelisation\middlewares\Cors;
+use \atelier\api\middlewares\Cors;
 $c = new \Slim\Container(array_merge($config_slim, $errors));
 $app = new \Slim\App($c);
 ########################Route User#################################
-$app->post('/signIn', ControllerUser::class.':signIn')
+$app->get('/signIn', ControllerUser::class.':signIn')
     ->add(Cors::class.':verificationAjoutHeader');
 
-$app->get('/signUp', ControllerUser::class.':signUp')
+$app->post('/signUp', ControllerUser::class.':signUp')
     ->add(Cors::class.':verificationAjoutHeader');
 $app->options('/{routes:.+}', function ($request, $response, $args) {
     return $response;

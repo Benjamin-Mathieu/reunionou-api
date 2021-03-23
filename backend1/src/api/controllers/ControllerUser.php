@@ -20,12 +20,12 @@ class ControllerUser
 
     public function signUp(Request $req, Response $res,array $args): Response
     {
-        $body = json_decode($res->getBody());
+        $body = json_decode($req->getBody());
         $user = new User;
         $user->mail = filter_var($body->mail,FILTER_SANITIZE_EMAIL);
         $user->name = filter_var($body->name,FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         $user->firstname = filter_var($body->firstname,FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-        $user->password = password_hash($body->password);
+        $user->password = password_hash($body->password,PASSWORD_DEFAULT);
         try
         {
             $user->save();
@@ -69,8 +69,13 @@ class ControllerUser
             'aud' =>  'https://docketu.iutnc.univ-lorraine.fr:14001',
             'iat' => time(),
             'exp' => time()+3600,
-            
+            'user' => $user
         ],
-        );
+        $this->c->settings['secrets'], 'HS512');
+
+        $res = $res->withStatus(200)
+                    ->withHeader('Content-Type','application/json');
+        $res->getBody()->write(json_encode($token));
+        return $res;
     }
 }
