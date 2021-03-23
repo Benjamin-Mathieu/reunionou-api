@@ -10,15 +10,30 @@ $db->addConnection($config_slim['settings']['dbconf']); /* configuration avec no
 $db->setAsGlobal();              /* rendre la connexion visible dans tout le projet */
 $db->bootEloquent();             /* établir la connexion */
 use \atelier\api\controllers\ControllerUser;
+use \atelier\api\controllers\ControllerEvent;
 use \atelier\api\middlewares\Cors;
 $c = new \Slim\Container(array_merge($config_slim, $errors));
 $app = new \Slim\App($c);
-########################Route User#################################
-$app->post('/signIn', ControllerUser::class.':signIn')
+########################Routes User#################################
+$app->post('/signIn[/]', ControllerUser::class.':signIn')
     ->add(Cors::class.':verificationAjoutHeader');
 
-$app->post('/signUp', ControllerUser::class.':signUp')
+$app->post('/signUp[/]', ControllerUser::class.':signUp')
     ->add(Cors::class.':verificationAjoutHeader');
+
+###################################################################
+#######################Routes Events##############################
+$app->get('/events[/]', ControllerEvent::class.':getEvents');
+    //->add(Cors::class.':verificationAjoutHeader');
+
+$app->get('/events/{id}[/]', ControllerEvent::class.':getEvent')
+    ->add(Cors::class.':verificationAjoutHeader')
+    ->setName('getEvent');
+
+$app->post('/events[/]', ControllerEvent::class.':createEvent')
+    ->add(Cors::class.':verificationAjoutHeader');
+
+
 $app->options('/{routes:.+}', function ($request, $response, $args) {
     return $response;
 });
