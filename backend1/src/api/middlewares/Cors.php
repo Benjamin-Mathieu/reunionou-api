@@ -29,11 +29,7 @@ class Cors
             ->withHeader('Access-Control-Allow-Methods', $this->c['settings']['cors']['methods'])
             ->withHeader('Access-Control-Allow-Headers', $this->c['settings']['cors']['headers'])
             ->withHeader('Access-Control-Allow-Max-Age', $this->c['settings']['cors']['maxAge'])
-            ->withHeader('Access-Control-Allow-Credentials', true);
-
-        if ($this->c['settings']['cors']['credentials']) {
-            $response = $response->withHeader('Access-Control-Allow-Credentials', 'true');
-        }
+            ->withHeader('Access-Control-Allow-Credentials', $this->c['settings']['cors']['credentials']);
         return $response;
     }
 }
