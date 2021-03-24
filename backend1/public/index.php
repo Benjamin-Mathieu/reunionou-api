@@ -6,7 +6,7 @@ $errors = require_once('conf/Errors.php'); /* Récupération des erreurs */
 use \Psr\Http\Message\ServerRequestInterface as Request;
 use \Psr\Http\Message\ResponseInterface as Response;
 use \atelier\api\controllers\ControllerUser;
-use \atelier\api\controllers\ControllerEvents;
+use \atelier\api\controllers\ControllerEvent;
 use \atelier\api\middlewares\Cors;
 use \atelier\api\middlewares\Token;
 
