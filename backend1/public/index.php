@@ -18,20 +18,25 @@ $db->bootEloquent();             /* établir la connexion */
 $c = new \Slim\Container(array_merge($config_slim, $errors));
 $app = new \Slim\App($c);
 
-########################Route User#################################
 $app->add(Cors::class . ':verificationAjoutHeader');
 $app->options('/{routes:.+}', function (Request $request, Response $response) {
     return $response;
 });
 
-$app->post('/signIn', ControllerUser::class . ':signIn');
+########################Routes User#################################
+$app->post('/signIn[/]', ControllerUser::class . ':signIn');
+$app->post('/signUp[/]', ControllerUser::class . ':signUp');
 
-$app->post('/signUp', ControllerUser::class . ':signUp');
+###################################################################
+#######################Routes Events##############################
+$app->get('/events[/]', ControllerEvent::class . ':getEvents');
 
-$app->post('/events', ControllerEvents::class . ':createEvent');
+$app->get('/events/{id}', ControllerEvent::class . ':getEvent')
+    ->add(Token::class . ':checkToken')
+    ->setName('getEvent');
 
-$app->get('/events/{id}', ControllerEvents::class . ':getEvent')
-    ->add(Token::class . ':checkToken');
+$app->put('/events/{id}[/]', ControllerEvent::class . ':modifEvent');
+$app->post('/events[/]', ControllerEvent::class . ':createEvent');
 
 // Catch-all route to serve a 404 Not Found page if none of the routes match
 // NOTE: make sure this route is defined last
