@@ -17,7 +17,10 @@ class ControllerEvent
 
     public function getEvents(Request $req, Response $res, array $args): Response
     {
-        $events = Event::where('public','=',1)->orderBy('date')->take(15)->get();
+        $events = Event::where('public','=',1)->orderBy('date')->take(15)->with(array('creator'=> function($query)
+        {
+            $query->select('id','name','firstname','mail');
+        }))->get();
         $result = array();
         foreach($events as $event)
         {
@@ -53,7 +56,7 @@ class ControllerEvent
         {
             $res = $res->withStatus(404)
                     ->withHeader('Content-Type','application/json');
-            $res->getBody()->write(json_encode("Event not Found"));
+            $res->getBody()->write(json_encode(["error" => "Event not Found"]));
             return $res;
         }
         $res = $res->withStatus(200)

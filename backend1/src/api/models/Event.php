@@ -7,8 +7,14 @@ class Event extends \Illuminate\Database\Eloquent\Model
     protected $primaryKey = 'id';
     public $timestamps = true;
 
-    public function participants()
+    public function creator()
     {
-        return $this->hasMany(User::class,'id');
+        return $this->hasOne(User::class,'id');
     }
+
+    public function messages()
+    {
+        return $this->hasMany(Message::class);
+    }
+
 }
