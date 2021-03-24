@@ -3,7 +3,7 @@
 return [
     "settings" => [
         'displayErrorDetails' => true,
-        'dbconf'=>[
+        'dbconf' => [
             'driver' => 'mysql',
             'host' => 'db',
             'database' => 'events',
@@ -15,10 +15,11 @@ return [
 
         ],
         'secrets' => 'efzgyiyfezuygffezfe56zfez654fez864',
-        "cors" =>[
+        "cors" => [
             "methods" => 'GET,POST,PUT,DELETE,OPTIONS',
             "headers" => 'Origin,Authorization,Content-Type,Accept,WWW-Authenticate',
-            "maxAge" => 3600
+            "maxAge" => 3600,
+            'credentials' => true,
         ]
     ]
 ];
