@@ -25,7 +25,7 @@ class Cors
 
         $response = $next($req, $res);
         // $req->getHeader('Origin')
-        $response = $response->withHeader('Access-Control-Allow-Origin', 'http://localhost:8080')
+        $response = $response->withHeader('Access-Control-Allow-Origin', '*')
             ->withHeader('Access-Control-Allow-Methods', $this->c['settings']['cors']['methods'])
             ->withHeader('Access-Control-Allow-Headers', $this->c['settings']['cors']['headers'])
             ->withHeader('Access-Control-Allow-Max-Age', $this->c['settings']['cors']['maxAge'])

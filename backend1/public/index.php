@@ -19,20 +19,25 @@ $c = new \Slim\Container(array_merge($config_slim, $errors));
 $app = new \Slim\App($c);
 
 ########################Route User#################################
+$app->add(Cors::class . ':verificationAjoutHeader');
 $app->options('/{routes:.+}', function (Request $request, Response $response) {
     return $response;
 });
 
-$app->post('/signIn', ControllerUser::class . ':signIn')
-    ->add(Cors::class . ':verificationAjoutHeader');
+$app->post('/signIn', ControllerUser::class . ':signIn');
 
-$app->post('/signUp', ControllerUser::class . ':signUp')
-    ->add(Cors::class . ':verificationAjoutHeader');
+$app->post('/signUp', ControllerUser::class . ':signUp');
 
-$app->post('/events', ControllerEvents::class . ':createEvent')
-    ->add(Cors::class . ':verificationAjoutHeader');
+$app->post('/events', ControllerEvents::class . ':createEvent');
 
 $app->get('/events/{id}', ControllerEvents::class . ':getEvent')
     ->add(Token::class . ':checkToken');
+
+// Catch-all route to serve a 404 Not Found page if none of the routes match
+// NOTE: make sure this route is defined last
+$app->map(['GET', 'POST', 'PUT', 'DELETE', 'PATCH'], '/{routes:.+}', function ($req, $res) {
+    $handler = $this->notFoundHandler; // handle using the default Slim page not found handler
+    return $handler($req, $res);
+});
 
 $app->run();
