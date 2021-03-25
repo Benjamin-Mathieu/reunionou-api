@@ -9,7 +9,8 @@ use \atelier\api\controllers\ControllerUser;
 use \atelier\api\controllers\ControllerEvent;
 use \atelier\api\middlewares\Cors;
 use \atelier\api\middlewares\Token;
-
+use \atelier\api\middlewares\CheckAuthorization;
+use \atelier\api\middlewares\CheckJWT;
 $db = new Illuminate\Database\Capsule\Manager();
 $db->addConnection($config_slim['settings']['dbconf']); /* configuration avec nos paramètres */
 $db->setAsGlobal();              /* rendre la connexion visible dans tout le projet */
@@ -24,7 +25,8 @@ $app->options('/{routes:.+}', function (Request $request, Response $response) {
 });
 
 ########################Routes User#################################
-$app->post('/signIn[/]', ControllerUser::class . ':signIn');
+$app->post('/signIn[/]', ControllerUser::class . ':signIn')
+    ->add(CheckAuthorization::class.':checkAuthorization');
 $app->post('/signUp[/]', ControllerUser::class . ':signUp');
 
 ###################################################################
@@ -32,11 +34,17 @@ $app->post('/signUp[/]', ControllerUser::class . ':signUp');
 $app->get('/events[/]', ControllerEvent::class . ':getEvents');
 
 $app->get('/events/{id}', ControllerEvent::class . ':getEvent')
-    ->add(Token::class . ':checkToken')
+    ->add(CheckAuthorization::class.':checkAuthorization')
+    //->add(Token::class . ':checkToken')
     ->setName('getEvent');
 
-$app->put('/events/{id}[/]', ControllerEvent::class . ':modifEvent');
-$app->post('/events[/]', ControllerEvent::class . ':createEvent');
+$app->put('/events/{id}[/]', ControllerEvent::class . ':modifEvent')
+    ->add(CheckAuthorization::class.':checkAuthorization')
+    ->add(CheckJWT::class.':checkJWT');
+
+$app->post('/events[/]', ControllerEvent::class . ':createEvent')
+    ->add(CheckAuthorization::class.':checkAuthorization')
+    ->add(CheckJWT::class.':checkJWT');
 
 // Catch-all route to serve a 404 Not Found page if none of the routes match
 // NOTE: make sure this route is defined last
