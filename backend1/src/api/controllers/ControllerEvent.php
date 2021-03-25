@@ -56,11 +56,12 @@ class ControllerEvent
             $res->getBody()->write(json_encode(["error" => "Event not Found"]));
             return $res;
         }
-        $tamer = $event->participants()->get();
+        $participants = $event->participants()->get();
+        foreach($participants as $participant)
+            unset($participant['pivot']['event_id']);
         $res = $res->withStatus(200)
             ->withHeader('Content-Type', 'application/json');
-        $res->getBody()->write(json_encode($tamer));
-        /*$res->getBody()->write(json_encode(
+        $res->getBody()->write(json_encode(
             [
                 "type" => "resource",
                 "event" => [
@@ -70,10 +71,11 @@ class ControllerEvent
                     "user_id" => $event->user_id,
                     "adress" => $event->adress,
                     "public" => $event->public,
-                    "main_event" => $event->main_event
+                    "main_event" => $event->main_event,
+                    "participants" => $participants
                 ]
             ]
-        ));*/
+        ));
         return $res;
     }
 

@@ -14,7 +14,7 @@ class Event extends \Illuminate\Database\Eloquent\Model
 
     public function participants()
     {
-        return $this->belongsToMany('atelier\api\models\User','atelier\api\models\Event','user_id','event_id');
+        return $this->belongsToMany('atelier\api\models\User','atelier\api\models\Participants','event_id','user_id')->select(['firstname','name'])->withPivot('present');
     }
     public function messages()
     {
