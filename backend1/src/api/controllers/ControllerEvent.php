@@ -19,9 +19,7 @@ class ControllerEvent
 
     public function getEvents(Request $req, Response $res, array $args): Response
     {
-        $events = Event::where('public', '=', 1)->orderBy('date')->take(15)->with(array('creator' => function ($query) {
-            $query->select('id', 'name', 'firstname', 'mail');
-        }))->get();
+        $events = Event::where('public', '=', 1)->orderBy('date')->take(15)->with('creator')->get();
         $result = array();
         foreach ($events as $event) {
             unset($event->deleted_at);
@@ -72,6 +70,7 @@ class ControllerEvent
                     "adress" => $event->adress,
                     "public" => $event->public,
                     "main_event" => $event->main_event,
+                    "creator" => $event->creator()->first(),
                     "participants" => $participants
                 ]
             ]
