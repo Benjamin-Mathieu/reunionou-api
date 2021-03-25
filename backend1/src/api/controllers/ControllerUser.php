@@ -57,7 +57,9 @@ class ControllerUser
         } catch (\Exception $e) {
             $res = $res->withStatus(404)
                 ->withHeader('Content-Type', 'application/json');
-            $res->getBody()->write(json_encode("User Not Found"));
+            $res->getBody()->write(json_encode([
+                "message" => "User Not Found"
+            ]));
             return $res;
         }
 
