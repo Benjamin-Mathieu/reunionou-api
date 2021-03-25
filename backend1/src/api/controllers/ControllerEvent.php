@@ -56,9 +56,11 @@ class ControllerEvent
             $res->getBody()->write(json_encode(["error" => "Event not Found"]));
             return $res;
         }
+        $tamer = $event->participants()->get();
         $res = $res->withStatus(200)
             ->withHeader('Content-Type', 'application/json');
-        $res->getBody()->write(json_encode(
+        $res->getBody()->write(json_encode($tamer));
+        /*$res->getBody()->write(json_encode(
             [
                 "type" => "resource",
                 "event" => [
@@ -71,7 +73,7 @@ class ControllerEvent
                     "main_event" => $event->main_event
                 ]
             ]
-        ));
+        ));*/
         return $res;
     }
 
