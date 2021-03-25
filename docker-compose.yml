@@ -78,6 +78,19 @@ services:
     networks:
       - d.net
 
+  ngrok:
+    image: shkoliar/ngrok:latest
+    ports:
+      - 4551:4551
+    links:
+      - api.events:docketu.iutnc.univ-lorraine.local
+    networks:
+      - d.net
+    environment:
+      - DOMAIN=docketu.iutnc.univ-lorraine.local
+      - PORT=14000
+    
+
 ################################################
 # mongodb & mongo-express
 ###############################################
