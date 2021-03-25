@@ -48,7 +48,7 @@ class ControllerUser
         $authString = base64_decode(explode(" ", $req->getHeader('Authorization')[0])[1]);
         list($mail, $pass) = explode(':', $authString);
         try {
-            $user = User::select('mail', 'name', 'firstname', 'password')->where('mail', '=', $mail)->first();
+            $user = User::select('id','mail', 'name', 'firstname', 'password')->where('mail', '=', $mail)->first();
 
             if (!password_verify($pass, $user->password))
                 throw new \Exception("password check failed");
