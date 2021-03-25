@@ -5,7 +5,6 @@ namespace atelier\api\controllers;
 use \Psr\Http\Message\ServerRequestInterface as Request;
 use \Psr\Http\Message\ResponseInterface as Response;
 use \atelier\api\models\User;
-use \Ramsey\Uuid\Uuid;
 use \GuzzleHttp\Client;
 use \Firebase\JWT\JWT;
 use Firebase\JWT\ExpiredException;
@@ -66,7 +65,7 @@ class ControllerUser
         $token = JWT::encode(
             [
                 'iss' => 'https://docketu.iutnc.univ-lorraine.fr:14001/signIn',
-                'aud' =>  'https://docketu.iutnc.univ-lorraine.fr:14001',
+                'aud' => 'https://docketu.iutnc.univ-lorraine.fr:14001',
                 'iat' => time(),
                 'exp' => time() + 3600,
                 'user' => $user

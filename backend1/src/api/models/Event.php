@@ -9,7 +9,7 @@ class Event extends \Illuminate\Database\Eloquent\Model
 
     public function creator()
     {
-        return $this->hasOne(User::class,'id')->select(array('id', 'name', 'firstname', 'mail'));
+        return $this->belongsTo(User::class,'user_id')->select(array('id', 'name', 'firstname', 'mail'));
     }
 
     public function participants()

@@ -5,7 +5,6 @@ namespace atelier\api\controllers;
 use \Psr\Http\Message\ServerRequestInterface as Request;
 use \Psr\Http\Message\ResponseInterface as Response;
 use \atelier\api\models\Event;
-use \Ramsey\Uuid\Uuid;
 use \GuzzleHttp\Client;
 
 class ControllerEvent
@@ -46,14 +45,8 @@ class ControllerEvent
     public function getEvent(Request $req, Response $res, array $args): Response
     {
         $id = $args['id'];
-        try {
-            $event = Event::where('id', '=', $id)->first();
-        } catch (\Exception $e) {
-            $res = $res->withStatus(404)
-                ->withHeader('Content-Type', 'application/json');
-            $res->getBody()->write(json_encode(["error" => "Event not Found"]));
-            return $res;
-        }
+        $event = Event::where('id', '=', $id)->first();
+        $creator = $event->creator()->get();
         $participants = $event->participants()->get();
         foreach ($participants as $participant)
             unset($participant['pivot']['event_id']);
