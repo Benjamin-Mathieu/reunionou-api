@@ -98,7 +98,11 @@ class ControllerEvent
         }
         $res = $res->withStatus(201)
             ->withHeader('Content-Type', 'application/json');
-        $res->getBody()->write(json_encode(["success" => "Event has been created"]));
+        $res->getBody()->write(json_encode([
+            "success" => "Event has been created",
+            "token" => $event->token,
+            "id" => $event->id
+        ]));
         return $res;
     }
 }
