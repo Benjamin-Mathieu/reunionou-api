@@ -7,8 +7,18 @@ class Event extends \Illuminate\Database\Eloquent\Model
     protected $primaryKey = 'id';
     public $timestamps = true;
 
+    public function creator()
+    {
+        return $this->hasOne(User::class,'id');
+    }
+
     public function participants()
     {
-        return $this->hasMany(User::class,'id');
+        return $this->belongsToMany('atelier\api\models\User','atelier\api\models\Participants','event_id','user_id')->select(['firstname','name'])->withPivot('present');
     }
+    public function messages()
+    {
+        return $this->hasMany(Message::class);
+    }
+
 }
