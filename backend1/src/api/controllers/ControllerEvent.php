@@ -56,10 +56,11 @@ class ControllerEvent
             $res->getBody()->write(json_encode(["error" => "Event not Found"]));
             return $res;
         }
-        // $tamer = $event->participants()->get();
+        $participants = $event->participants()->get();
+        foreach ($participants as $participant)
+            unset($participant['pivot']['event_id']);
         $res = $res->withStatus(200)
             ->withHeader('Content-Type', 'application/json');
-        // $res->getBody()->write(json_encode($tamer));
         $res->getBody()->write(json_encode(
             [
                 "type" => "resource",
@@ -70,7 +71,8 @@ class ControllerEvent
                     "user_id" => $event->user_id,
                     "adress" => $event->adress,
                     "public" => $event->public,
-                    "main_event" => $event->main_event
+                    "main_event" => $event->main_event,
+                    "participants" => $participants
                 ]
             ]
         ));
@@ -84,11 +86,11 @@ class ControllerEvent
         $event->title = filter_var($body->title, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         $event->description = filter_var($body->description, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         $event->date = $body->date;
-        $event->user_id = 1;
+        $event->user_id = $req->getAttribute('token')->user;
         $event->token = bin2hex(random_bytes(32));
         $event->adress = filter_var($body->adress, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-        $event->public = 1;
-        $event->main_event = 1;
+        $event->public = $body->public;
+        $event->main_event = $body->main_event;
 
         try {
             $event->save();
