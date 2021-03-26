@@ -19,7 +19,7 @@ $db->bootEloquent();             /* établir la connexion */
 $c = new \Slim\Container(array_merge($config_slim, $errors));
 $app = new \Slim\App($c);
 
-$app->add(Cors::class . ':verificationAjoutHeader');
+//$app->add(Cors::class . ':verificationAjoutHeader');
 $app->options('/{routes:.+}', function (Request $request, Response $response) {
     return $response;
 });

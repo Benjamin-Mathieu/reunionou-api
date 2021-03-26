@@ -6,6 +6,7 @@ use \Psr\Http\Message\ServerRequestInterface as Request;
 use \Psr\Http\Message\ResponseInterface as Response;
 use \atelier\api\models\Event;
 use \atelier\api\models\Message;
+use \atelier\api\models\User;
 use \GuzzleHttp\Client;
 use \Illuminate\Database\Eloquent\ModelNotFoundException;
 use \Illuminate\Database\QueryException;
@@ -40,10 +41,14 @@ class ControllerEvent
 
     public function getPrivateEvents(Request $req, Response $res, array $args): Response
     {
-        $events = Event::where('user_id','=',$req->getAttribute('token')->user->id)->orderBy('date')->take(15)->get();
+        $events = Event::where('user_id','=',$req->getAttribute('token')->user->id)->where('public','=',0)->orderBy('date')->take(15)->get();
         $res = $res->withStatus(200)
                     ->withHeader('Content-Type', 'application/json');
-        $res->getBody()->write(json_encode($events));
+        $res->getBody()->write(json_encode(
+            [
+                "type" => "collections",
+                "events" => $events
+        ]));
         return $res;
 
     }
@@ -66,7 +71,7 @@ class ControllerEvent
         $res = $res->withStatus(200)
             ->withHeader('Content-Type', 'application/json');
         $res->getBody()->write(json_encode([
-            "type" => "resources",
+            "type" => "collections",
             "count" => $events->count(),
             "events" => $result
         ]));
