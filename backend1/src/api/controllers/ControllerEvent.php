@@ -237,7 +237,7 @@ class ControllerEvent
         )));
         $res = $res->withStatus(200)
             ->withHeader('Content-Type', 'application/json');
-        $res->getBody()->write(json_encode(["success" => "L'utilisateur "]));
+        $res->getBody()->write(json_encode(["success" => "User is added to event"]));
         return $res;
     }
 }

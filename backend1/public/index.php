@@ -20,7 +20,7 @@ $db->bootEloquent();             /* établir la connexion */
 $c = new \Slim\Container(array_merge($config_slim, $errors));
 $app = new \Slim\App($c);
 
-//$app->add(Cors::class . ':verificationAjoutHeader');
+$app->add(Cors::class . ':verificationAjoutHeader');
 $app->options('/{routes:.+}', function (Request $request, Response $response) {
     return $response;
 });
@@ -37,14 +37,18 @@ $app->get('/events[/]', ControllerEvent::class . ':getEvents');
 $app->get('/privateEvents[/]', ControllerEvent::class . ':getPrivateEvents')
     ->add(CheckAuthorization::class . ':checkAuthorization')
     ->add(CheckJWT::class . ':checkJWT');
+
 $app->get('/test[/]', ControllerEvent::class . ':paginationEvents');
+
 $app->get('/events/{id}', ControllerEvent::class . ':getEvent')
     ->add(CheckAuthorization::class . ':checkAuthorization')
+    ->add(Token::class . ':checkToken')
     ->setName('getEvent');
 
 $app->put('/events/{id}[/]', ControllerEvent::class . ':modifEvent')
     ->add(CheckAuthorization::class . ':checkAuthorization')
     ->add(CheckJWT::class . ':checkJWT');
+
 $app->delete('/events/{id}[/]', ControllerEvent::class . ':deleteEvent')
     ->add(CheckAuthorization::class . ':checkAuthorization')
     ->add(CheckJWT::class . ':checkJWT');
