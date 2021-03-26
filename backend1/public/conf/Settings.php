@@ -5,10 +5,10 @@ return [
         'displayErrorDetails' => true,
         'dbconf' => [
             'driver' => 'mysql',
-            'host' => 'localhost',
-            'database' => 'atelier2',
-            'username'  => 'root',
-            'password'  => 'root',
+            'host' => 'db',
+            'database' => 'events',
+            'username'  => 'events',
+            'password'  => 'events',
             'charset'   => 'utf8',
             'collation' => 'utf8_unicode_ci',
             'prefix'    => ''
