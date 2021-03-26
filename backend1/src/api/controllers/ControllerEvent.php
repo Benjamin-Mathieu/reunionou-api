@@ -43,7 +43,6 @@ class ControllerEvent
     public function getPrivateEvents(Request $req, Response $res, array $args): Response
     {
         $token = $req->getAttribute('token');
-        //where('user_id','=',$req->getAttribute('token')->user->id)
         $events = Event::where('public','=',0)->with('creator')->where(function($q)use($token){
             $q->where('user_id','=',$token->user->id)->orWhereHas('participants',function($query) use($token)
             {
@@ -144,7 +143,7 @@ class ControllerEvent
         $token = $req->getAttribute('token');
         $event = new Event;
         $event->title = filter_var($body->title, FILTER_SANITIZE_STRING);
-        $event->description = filter_var($body->description, FILTER_SANITIZE_STRING);
+        $event->description = filter_var($body->description, FILTER_SANITIZE_STRING,FILTER_FLAG_NO_ENCODE_QUOTES);
         $event->date = $body->date;
         $event->user_id = $token->user->id;
         $event->token = bin2hex(random_bytes(32));
@@ -282,6 +281,52 @@ class ControllerEvent
         $res = $res->withStatus(200)
                     ->withHeader('Content-Type', 'application/json');
         $res->getBody()->write(json_encode(["success" => "Participants has been added"]));
+        return $res;
+    }
+
+    public function responseParticipants(Request $req, Response $res, array $args): Response
+    {
+        $body = json_decode($req->getBody());
+        $token = $req->getAttribute('token');
+        $participant = Participants::where('event_id','=',$args['id'])->where(function($q)use($token){
+            $q->where('user_id','=',$token->user->id);
+        })->first();
+        if(is_null($participant))
+        {
+            $participant = New Participants;
+            $participant->user_id = $token->user->id;
+            $participant->event_id = $args['id'];
+            $participant->present = $body->response;
+            try
+            {
+                $participant->save();
+            }
+            catch(\Exception $e)
+            {
+                $res = $res->withStatus(500)
+                            ->withHeader('Content-Type', 'application/json');
+                $res->getBody()->write(json_encode(["error"=>"Internal Server Error"]));
+                return $res;
+            }
+        }
+        else
+        {
+            $participant->present = $body->response;
+            echo $participant;
+            try
+            {
+                $participant->save();
+            }
+            catch(\Exception $e)
+            {
+                $res = $res->withStatus(500)
+                            ->withHeader('Content-Type', 'application/json');
+                $res->getBody()->write(json_encode(["error"=>"Internal Server Error"]));
+            }
+        }
+        $res = $res->withStatus(200)
+                    ->withHeader('Content-Type', 'application/json');
+        $res->getBody()->write(json_encode(["success" => "participation updated"]));
         return $res;
     }
 }

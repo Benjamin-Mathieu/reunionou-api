@@ -19,7 +19,7 @@ $db->bootEloquent();             /* établir la connexion */
 $c = new \Slim\Container(array_merge($config_slim, $errors));
 $app = new \Slim\App($c);
 
-//$app->add(Cors::class . ':verificationAjoutHeader');
+$app->add(Cors::class . ':verificationAjoutHeader');
 $app->options('/{routes:.+}', function (Request $request, Response $response) {
     return $response;
 });
@@ -27,16 +27,20 @@ $app->options('/{routes:.+}', function (Request $request, Response $response) {
 ########################Routes User#####################################
 $app->post('/signIn[/]', ControllerUser::class . ':signIn')
     ->add(CheckAuthorization::class.':checkAuthorization');
+
 $app->post('/signUp[/]', ControllerUser::class . ':signUp');
 
 #########################################################################
 
 #######################Routes Events#####################################
 $app->get('/events[/]', ControllerEvent::class . ':getEvents');
+
 $app->get('/privateEvents[/]', ControllerEvent::class . ':getPrivateEvents')
     ->add(CheckAuthorization::class.':checkAuthorization')
     ->add(CheckJWT::class.':checkJWT');
+
 $app->get('/test[/]', ControllerEvent::class . ':paginationEvents');
+
 $app->get('/events/{id}', ControllerEvent::class . ':getEvent')
     ->add(CheckAuthorization::class.':checkAuthorization')
     ->setName('getEvent');
@@ -44,6 +48,7 @@ $app->get('/events/{id}', ControllerEvent::class . ':getEvent')
 $app->put('/events/{id}[/]', ControllerEvent::class . ':modifEvent')
     ->add(CheckAuthorization::class.':checkAuthorization')
     ->add(CheckJWT::class.':checkJWT');
+
 $app->delete('/events/{id}[/]', ControllerEvent::class . ':deleteEvent')
     ->add(CheckAuthorization::class.':checkAuthorization')
     ->add(CheckJWT::class.':checkJWT');
@@ -57,12 +62,19 @@ $app->get('/events/{id}/messages[/]', ControllerEvent::class.':getEventsMessages
 $app->post('/events/{id}/messages[/]', ControllerEvent::class.':postEventsMessages')
     ->add(CheckAuthorization::class.':checkAuthorization')
     ->add(CheckJWT::class.':checkJWT');
+
 $app->post('/events/{id}/participants[/]', ControllerEvent::class.':addParticipants')
     ->add(CheckAuthorization::class.':checkAuthorization')
     ->add(CheckJWT::class.':checkJWT');
+
+$app->put('/events/{id}/response[/]', ControllerEvent::class.':responseParticipants')
+    ->add(CheckAuthorization::class.':checkAuthorization')
+    ->add(CheckJWT::class.':checkJWT');
+
 $app->put('/events/{id}/messages/{messageId}[/]', ControllerEvent::class.':modifEventsMessages')
     ->add(CheckAuthorization::class.':checkAuthorization')
     ->add(CheckJWT::class.':checkJWT');
+
 $app->delete('/events/{id}/messages/{messagesId}[/]', ControllerEvent::class.'deleteEventsMessage')
     ->add(CheckAuthorization::class.':checkAuthorization')
     ->add(CheckJWT::class.':checkJWT');
