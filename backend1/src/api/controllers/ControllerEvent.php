@@ -5,7 +5,10 @@ namespace atelier\api\controllers;
 use \Psr\Http\Message\ServerRequestInterface as Request;
 use \Psr\Http\Message\ResponseInterface as Response;
 use \atelier\api\models\Event;
+use \atelier\api\models\Message;
 use \GuzzleHttp\Client;
+use \Illuminate\Database\Eloquent\ModelNotFoundException;
+use \Illuminate\Database\QueryException;
 
 class ControllerEvent
 {
@@ -45,7 +48,17 @@ class ControllerEvent
     public function getEvent(Request $req, Response $res, array $args): Response
     {
         $id = $args['id'];
-        $event = Event::where('id', '=', $id)->first();
+        try
+        {
+            $event = Event::where('id', '=', $id)->firstOrFail();
+        }
+        catch(ModelNotFoundException $e)
+        {
+            $res = $res->withStatus(404)
+                        ->withHeader('Content-Type', 'application/json');
+            $res->getBody()->write(json_encode(["error" => "Event not Found"]));
+            return $res;
+        }
         $creator = $event->creator()->get();
         $participants = $event->participants()->get();
         foreach($participants as $participant)
@@ -76,12 +89,12 @@ class ControllerEvent
         $body = json_decode($req->getBody());
         $token = $req->getAttribute('token');
         $event = new Event;
-        $event->title = filter_var($body->title, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-        $event->description = filter_var($body->description, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        $event->title = filter_var($body->title, FILTER_SANITIZE_SPECIAL_CHARS);
+        $event->description = filter_var($body->description, FILTER_SANITIZE_SPECIAL_CHARS);
         $event->date = $body->date;
         $event->user_id = $token->user->id;
         $event->token = bin2hex(random_bytes(32));
-        $event->adress = filter_var($body->adress, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        $event->adress = filter_var($body->adress, FILTER_SANITIZE_SPECIAL_CHARS);
         $event->public = $body->public;
         $event->main_event = $body->main_event;
 
@@ -96,6 +109,52 @@ class ControllerEvent
         $res = $res->withStatus(201)
             ->withHeader('Content-Type', 'application/json');
         $res->getBody()->write(json_encode(["success" => "Event has been created"]));
+        return $res;
+    }
+
+    public function getEventsMessages(Request $req, Response $res, array $args): Response
+    {
+        try
+        {
+            $event = Event::where('id', '=', $args['id'])->firstOrFail();
+        }
+        catch(ModelNotFoundException $e)
+        {
+            $res = $res->withStatus(404)
+                        ->withHeader('Content-Type', 'application/json');
+            $res->getBody()->write(json_encode(["error" => "Event not Found"]));
+            return $res;
+        }
+
+        $messages = $event->messages()->get();
+        $res = $res->withStatus(200)
+                    ->withHeader('Content-Type', 'application/json');
+        $res->getBody()->write(json_encode($messages));
+        return $res;
+    }
+
+    public function createEventsMessage(Request $req, Response $res, array $args): Response
+    {
+        $body = json_decode($req->getBody());
+        $token = $req->getAttribute('token');
+        $message = new Message;
+        $message->text = filter_var($body->text,FILTER_FULL_SPECIAL_CHARS);
+        $message->user_id = $token->user->id;
+        $message->user_id = $args['id'];
+        try
+        {
+            $message->save();
+        }
+        catch(\Exception $e)
+        {
+            $res = $res->withStatus(500)
+                ->withHeader('Content-Type', 'application/json');
+            $res->getBody()->write(json_encode($e->getMessage()));
+            return $res;
+        }
+        $res = $res->withStatus(201)
+                    ->withHeader('Content-Type', 'application/json');
+        $res->getBody()->write(json_encode(["success" => "Message has been created"]));
         return $res;
     }
 }

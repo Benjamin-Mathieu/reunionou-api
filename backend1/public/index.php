@@ -24,13 +24,14 @@ $app->options('/{routes:.+}', function (Request $request, Response $response) {
     return $response;
 });
 
-########################Routes User#################################
+########################Routes User#####################################
 $app->post('/signIn[/]', ControllerUser::class . ':signIn')
     ->add(CheckAuthorization::class.':checkAuthorization');
 $app->post('/signUp[/]', ControllerUser::class . ':signUp');
 
-###################################################################
-#######################Routes Events##############################
+#########################################################################
+
+#######################Routes Events#####################################
 $app->get('/events[/]', ControllerEvent::class . ':getEvents');
 
 $app->get('/events/{id}', ControllerEvent::class . ':getEvent')
@@ -46,6 +47,18 @@ $app->post('/events[/]', ControllerEvent::class . ':createEvent')
     ->add(CheckAuthorization::class.':checkAuthorization')
     ->add(CheckJWT::class.':checkJWT');
 
+$app->get('/events/{id}/messages[/]', ControllerEvent::class.':getEventsMessages');
+
+$app->post('/events/{id}/messages[/]', ControllerEvent::class.':postEventsMessages')
+    ->add(CheckAuthorization::class.':checkAuthorization')
+    ->add(CheckJWT::class.':checkJWT');
+$app->put('/events/{id}/messages/{messageId}[/]', ControllerEvent::class.':modifEventsMessages')
+    ->add(CheckAuthorization::class.':checkAuthorization')
+    ->add(CheckJWT::class.':checkJWT');
+$app->delete('/events/{id}/messages/{messagesId}[/]', ControllerEvent::class.'deleteEventsMessage')
+    ->add(CheckAuthorization::class.':checkAuthorization')
+    ->add(CheckJWT::class.':checkJWT');
+#########################################################################
 // Catch-all route to serve a 404 Not Found page if none of the routes match
 // NOTE: make sure this route is defined last
 $app->map(['GET', 'POST', 'PUT', 'DELETE', 'PATCH'], '/{routes:.+}', function ($req, $res) {
