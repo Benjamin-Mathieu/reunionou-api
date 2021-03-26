@@ -5,6 +5,7 @@ class User extends \Illuminate\Database\Eloquent\Model
 {
     protected $table = 'user';
     protected $primaryKey = 'id';
+    protected $fillable = ['user_id'];
     public $timestamps = true;
 
     public function messages()

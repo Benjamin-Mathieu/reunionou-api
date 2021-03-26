@@ -54,14 +54,12 @@ $app->post('/events[/]', ControllerEvent::class . ':createEvent')
 
 $app->get('/events/{id}/messages[/]', ControllerEvent::class.':getEventsMessages');
 
-$app->post('/events/{id}/participants[/]', ControllerEvent::class.':addParticipants')
-    ->add(CheckAuthorization::class.':checkAuthorization')
-    ->add(CheckJWT::class.':checkJWT');
-
 $app->post('/events/{id}/messages[/]', ControllerEvent::class.':postEventsMessages')
     ->add(CheckAuthorization::class.':checkAuthorization')
     ->add(CheckJWT::class.':checkJWT');
-
+$app->post('/events/{id}/participants[/]', ControllerEvent::class.':addParticipants')
+    ->add(CheckAuthorization::class.':checkAuthorization')
+    ->add(CheckJWT::class.':checkJWT');
 $app->put('/events/{id}/messages/{messageId}[/]', ControllerEvent::class.':modifEventsMessages')
     ->add(CheckAuthorization::class.':checkAuthorization')
     ->add(CheckJWT::class.':checkJWT');
