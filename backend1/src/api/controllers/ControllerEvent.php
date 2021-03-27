@@ -8,7 +8,6 @@ use \atelier\api\models\Event;
 use \atelier\api\models\Message;
 use \atelier\api\models\Participants;
 use \atelier\api\models\User;
-use \atelier\api\models\Participants;
 use \GuzzleHttp\Client;
 use \Illuminate\Database\Eloquent\ModelNotFoundException;
 use \Illuminate\Database\QueryException;
