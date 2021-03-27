@@ -28,12 +28,14 @@ $app->options('/{routes:.+}', function (Request $request, Response $response) {
 ########################Routes User#####################################
 $app->post('/signIn[/]', ControllerUser::class . ':signIn')
     ->add(CheckAuthorization::class . ':checkAuthorization');
+
 $app->post('/signUp[/]', ControllerUser::class . ':signUp');
 
 #########################################################################
 
 #######################Routes Events#####################################
 $app->get('/events[/]', ControllerEvent::class . ':getEvents');
+
 $app->get('/privateEvents[/]', ControllerEvent::class . ':getPrivateEvents')
     ->add(CheckAuthorization::class . ':checkAuthorization')
     ->add(CheckJWT::class . ':checkJWT');
@@ -59,17 +61,22 @@ $app->post('/events[/]', ControllerEvent::class . ':createEvent')
 
 $app->get('/events/{id}/messages[/]', ControllerEvent::class . ':getEventsMessages');
 
+$app->post('/events/{id}/messages[/]', ControllerEvent::class . ':postEventsMessages')
+    ->add(CheckAuthorization::class . ':checkAuthorization')
+    ->add(CheckJWT::class . ':checkJWT');
+
 $app->post('/events/{id}/participants[/]', ControllerEvent::class . ':addParticipants')
     ->add(CheckAuthorization::class . ':checkAuthorization')
     ->add(CheckJWT::class . ':checkJWT');
 
-$app->post('/events/{id}/messages[/]', ControllerEvent::class . ':postEventsMessages')
+$app->put('/events/{id}/response[/]', ControllerEvent::class . ':responseParticipants')
     ->add(CheckAuthorization::class . ':checkAuthorization')
     ->add(CheckJWT::class . ':checkJWT');
 
 $app->put('/events/{id}/messages/{messageId}[/]', ControllerEvent::class . ':modifEventsMessages')
     ->add(CheckAuthorization::class . ':checkAuthorization')
     ->add(CheckJWT::class . ':checkJWT');
+
 $app->delete('/events/{id}/messages/{messagesId}[/]', ControllerEvent::class . 'deleteEventsMessage')
     ->add(CheckAuthorization::class . ':checkAuthorization')
     ->add(CheckJWT::class . ':checkJWT');

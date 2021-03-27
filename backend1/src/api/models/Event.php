@@ -6,6 +6,7 @@ class Event extends \Illuminate\Database\Eloquent\Model
 {
     protected $table = 'event';
     protected $primaryKey = 'id';
+    protected $hidden = ['deleted_at'];
     public $timestamps = true;
 
     public function creator()

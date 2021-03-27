@@ -6,6 +6,7 @@ use \Psr\Http\Message\ServerRequestInterface as Request;
 use \Psr\Http\Message\ResponseInterface as Response;
 use \atelier\api\models\Event;
 use \atelier\api\models\Message;
+use \atelier\api\models\Participants;
 use \atelier\api\models\User;
 use \atelier\api\models\Participants;
 use \GuzzleHttp\Client;
@@ -41,13 +42,31 @@ class ControllerEvent
 
     public function getPrivateEvents(Request $req, Response $res, array $args): Response
     {
-        $events = Event::where('user_id', '=', $req->getAttribute('token')->user->id)->where('public', '=', 0)->orderBy('date')->take(15)->get();
+        $token = $req->getAttribute('token');
+        $events = Event::where('public', '=', 0)->with('creator')->where(function ($q) use ($token) {
+            $q->where('user_id', '=', $token->user->id)->orWhereHas('participants', function ($query) use ($token) {
+                $query->where('user_id', '=', $token->user->id);
+            });
+        })->orderBy('date')->take(15)->get();
+        $result = array();
+        foreach ($events as $event) {
+            //unset($event->updated_at);
+            array_push($result, array(
+                "event" => $event,
+                "links" => array(
+                    "self" => array(
+                        "href" => $this->c->get('router')->pathFor('getEvent', ['id' => $event->id])
+                    )
+                )
+            ));
+        }
         $res = $res->withStatus(200)
             ->withHeader('Content-Type', 'application/json');
         $res->getBody()->write(json_encode(
             [
                 "type" => "collections",
-                "events" => $events
+                "count" => $events->count(),
+                "events" => $result
             ]
         ));
         return $res;
@@ -57,7 +76,6 @@ class ControllerEvent
         $events = Event::where('public', '=', 1)->orderBy('date')->take(15)->with('creator')->get();
         $result = array();
         foreach ($events as $event) {
-            unset($event->deleted_at);
             unset($event->updated_at);
             array_push($result, array(
                 "event" => $event,
@@ -121,7 +139,7 @@ class ControllerEvent
         $token = $req->getAttribute('token');
         $event = new Event;
         $event->title = filter_var($body->title, FILTER_SANITIZE_STRING);
-        $event->description = filter_var($body->description, FILTER_SANITIZE_STRING);
+        $event->description = filter_var($body->description, FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES);
         $event->date = $body->date;
         $event->user_id = $token->user->id;
         $event->token = bin2hex(random_bytes(32));
@@ -139,11 +157,7 @@ class ControllerEvent
         }
         $res = $res->withStatus(201)
             ->withHeader('Content-Type', 'application/json');
-        $res->getBody()->write(json_encode([
-            "success" => "Event has been created",
-            "token" => $event->token,
-            "id" => $event->id
-        ]));
+        $res->getBody()->write(json_encode(["success" => "Event has been created"]));
         return $res;
     }
 
@@ -222,22 +236,63 @@ class ControllerEvent
     public function addParticipants(Request $req, Response $res, array $args): Response
     {
         $body = json_decode($req->getBody());
-        $event_id = $args['id'];
         try {
-            $user = User::select('id', 'mail')->where('mail', '=', $body->mail)->firstOrFail();
+            $user = User::select('id')->where('mail', '=', $body->mail)->firstOrFail();
         } catch (ModelNotFoundException $e) {
             $res = $res->withStatus(404)
                 ->withHeader('Content-Type', 'application/json');
             $res->getBody()->write(json_encode(["error" => "User not Found"]));
             return $res;
         }
-        Event::find($args['id'])->participants()->save(new Participants(array(
-            'user_id' => $user->id,
-            'event_id' => $event_id
-        )));
+        try {
+            $event = Event::findOrFail($args['id']);
+        } catch (ModelNotFoundException $e) {
+            $res = $res->withStatus(404)
+                ->withHeader('Content-Type', 'application/json');
+            $res->getBody()->write(json_encode(["error" => "Event not Found"]));
+            return $res;
+        }
+        $event->participants()->attach(['user_id' => $user->id]);
         $res = $res->withStatus(200)
             ->withHeader('Content-Type', 'application/json');
-        $res->getBody()->write(json_encode(["success" => "User is added to event"]));
+        $res->getBody()->write(json_encode(["success" => "Participants has been added"]));
+        return $res;
+    }
+
+    public function responseParticipants(Request $req, Response $res, array $args): Response
+    {
+        $body = json_decode($req->getBody());
+        $token = $req->getAttribute('token');
+        $participant = Participants::where('event_id', '=', $args['id'])->where(function ($q) use ($token) {
+            $q->where('user_id', '=', $token->user->id);
+        })->first();
+        if (is_null($participant)) {
+            $participant = new Participants;
+            $participant->user_id = $token->user->id;
+            $participant->event_id = $args['id'];
+            $participant->present = $body->response;
+            try {
+                $participant->save();
+            } catch (\Exception $e) {
+                $res = $res->withStatus(500)
+                    ->withHeader('Content-Type', 'application/json');
+                $res->getBody()->write(json_encode(["error" => "Internal Server Error"]));
+                return $res;
+            }
+        } else {
+            $participant->present = $body->response;
+            echo $participant;
+            try {
+                $participant->save();
+            } catch (\Exception $e) {
+                $res = $res->withStatus(500)
+                    ->withHeader('Content-Type', 'application/json');
+                $res->getBody()->write(json_encode(["error" => "Internal Server Error"]));
+            }
+        }
+        $res = $res->withStatus(200)
+            ->withHeader('Content-Type', 'application/json');
+        $res->getBody()->write(json_encode(["success" => "participation updated"]));
         return $res;
     }
 }
