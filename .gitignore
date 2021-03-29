@@ -1,2 +1,3 @@
 /backend1/src/vendor/
 /backend1/src/composer.lock
+/backend1/public/conf/Settings.php
