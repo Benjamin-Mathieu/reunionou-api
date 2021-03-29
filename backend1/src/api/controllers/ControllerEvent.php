@@ -178,16 +178,23 @@ class ControllerEvent
             $res->getBody()->write(json_encode(["error" => "Event not Found"]));
             return $res;
         }
-
+        $result = array();
         $messages = $event->messages()->get();
-        $user = $message->sender()->first();
+        foreach($messages as $message)
+        {
+            array_push($result,[
+                "message" => $message,
+
+
+                "user" => $message->sender()->first()
+            ]);
+        }
         $res = $res->withStatus(200)
                     ->withHeader('Content-Type', 'application/json');
-        $res->getBody()->write(json_encode(
-            [
-                "message" => $messages,
-                "user" => $user
-            ]));
+        $res->getBody()->write(json_encode([
+            "type" => "collections",
+            "messages" => $result
+        ]));
         return $res;
     }
 
@@ -207,7 +214,7 @@ class ControllerEvent
         {
             $res = $res->withStatus(500)
                 ->withHeader('Content-Type', 'application/json');
-            $res->getBody()->write(json_encode(["error" => "Intern Server Error"]));
+            $res->getBody()->write(json_encode($e->getMessage()));//["error" => "Internal Server Error"]));
             return $res;
         }
         $res = $res->withStatus(201)
