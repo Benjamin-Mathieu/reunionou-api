@@ -193,7 +193,7 @@ class ControllerEvent
         $message = new Message;
         $message->text = filter_var($body->text,FILTER_FULL_STRING);
         $message->user_id = $token->user->id;
-        $message->user_id = $args['id'];
+        $message->event_id = $args['id'];
         try
         {
             $message->save();
@@ -288,42 +288,21 @@ class ControllerEvent
     {
         $body = json_decode($req->getBody());
         $token = $req->getAttribute('token');
-        $participant = Participants::where('event_id','=',$args['id'])->where(function($q)use($token){
+        /*$participant = Participants::where('event_id','=',$args['id'])->where(function($q)use($token){
             $q->where('user_id','=',$token->user->id);
-        })->first();
-        if(is_null($participant))
+        })->first();*/
+        try
         {
-            $participant = New Participants;
-            $participant->user_id = $token->user->id;
-            $participant->event_id = $args['id'];
-            $participant->present = $body->response;
-            try
-            {
-                $participant->save();
-            }
-            catch(\Exception $e)
-            {
-                $res = $res->withStatus(500)
-                            ->withHeader('Content-Type', 'application/json');
-                $res->getBody()->write(json_encode(["error"=>"Internal Server Error"]));
-                return $res;
-            }
+            $user = User::findOrFail($token->user->id);
         }
-        else
+        catch(ModelNotFoundException $e)
         {
-            $participant->present = $body->response;
-            echo $participant;
-            try
-            {
-                $participant->save();
-            }
-            catch(\Exception $e)
-            {
-                $res = $res->withStatus(500)
-                            ->withHeader('Content-Type', 'application/json');
-                $res->getBody()->write(json_encode(["error"=>"Internal Server Error"]));
-            }
+            $res = $res->withStatus(404)
+                        ->withHeader('Content-Type', 'application/json');
+            $res->getBody()->write(json_encode(["error" => "User not Found"]));
+            return $res;
         }
+        $user->participants()->updateExistingPivot($args['id'],array('present'=>$body->response));
         $res = $res->withStatus(200)
                     ->withHeader('Content-Type', 'application/json');
         $res->getBody()->write(json_encode(["success" => "participation updated"]));

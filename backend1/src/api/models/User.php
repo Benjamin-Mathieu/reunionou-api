@@ -12,4 +12,9 @@ class User extends \Illuminate\Database\Eloquent\Model
     {
         return $this->hasMany(Message::class);
     }
+
+    public function participants()
+    {
+        return $this->belongsToMany('atelier\api\models\Event','atelier\api\models\Participants','user_id','event_id')->withPivot('present');
+    }
 }
