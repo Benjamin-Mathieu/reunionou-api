@@ -44,7 +44,7 @@ $app->get('/test[/]', ControllerEvent::class . ':paginationEvents');
 
 $app->get('/events/{id}', ControllerEvent::class . ':getEvent')
     ->add(CheckAuthorization::class . ':checkAuthorization')
-    ->add(Token::class . ':checkToken')
+    //->add(Token::class . ':checkToken')
     ->setName('getEvent');
 
 $app->put('/events/{id}[/]', ControllerEvent::class . ':modifEvent')
@@ -77,7 +77,7 @@ $app->put('/events/{id}/messages/{messageId}[/]', ControllerEvent::class . ':mod
     ->add(CheckAuthorization::class . ':checkAuthorization')
     ->add(CheckJWT::class . ':checkJWT');
 
-$app->delete('/events/{id}/messages/{messagesId}[/]', ControllerEvent::class . 'deleteEventsMessage')
+$app->delete('/events/{id}/messages/{messagesId}[/]', ControllerEvent::class . ':deleteEventsMessage')
     ->add(CheckAuthorization::class . ':checkAuthorization')
     ->add(CheckJWT::class . ':checkJWT');
 #########################################################################

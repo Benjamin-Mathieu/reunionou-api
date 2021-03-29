@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Hôte : localhost
--- Généré le : lun. 29 mars 2021 à 08:18
+-- Généré le : lun. 29 mars 2021 à 09:22
 -- Version du serveur :  8.0.22
 -- Version de PHP : 7.4.12
 
@@ -73,8 +73,15 @@ CREATE TABLE `message` (
   `event_id` int NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NOT NULL,
-  `deleted_at` timestamp NOT NULL
+  `deleted_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+--
+-- Déchargement des données de la table `message`
+--
+
+INSERT INTO `message` (`id`, `text`, `user_id`, `event_id`, `created_at`, `updated_at`, `deleted_at`) VALUES
+(1, 'tamere', 2, 7, '2021-03-29 07:03:14', '2021-03-29 07:03:14', NULL);
 
 -- --------------------------------------------------------
 
@@ -168,7 +175,7 @@ ALTER TABLE `event`
 -- AUTO_INCREMENT pour la table `message`
 --
 ALTER TABLE `message`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT pour la table `user`

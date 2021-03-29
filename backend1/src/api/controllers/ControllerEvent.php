@@ -225,7 +225,7 @@ class ControllerEvent
 
     public function deleteEventsMessage(Request $req, Response $res, array $args): Response
     {
-        $message = Message::find($args['messageId']);
+        $message = Message::find($args['messagesId']);
         try
         {
             $message->delete();
@@ -234,7 +234,7 @@ class ControllerEvent
         {
             $res = $res->withStatus(500)
                 ->withHeader('Content-Type', 'application/json');
-            $res->getBody()->write(json_encode(["error" => "Intern Server Error"]));
+            $res->getBody()->write(json_encode(["error" => "Internal Server Error"]));
             return $res;
         }
         $res = $res->withStatus(200)
@@ -308,11 +308,48 @@ class ControllerEvent
             $res->getBody()->write(json_encode(["error" => "Event not Found"]));
             return $res;
         }
-        $event->participants()->attach(['user_id'=>$user->id]);
-        $res = $res->withStatus(200)
-                    ->withHeader('Content-Type', 'application/json');
-        $res->getBody()->write(json_encode(["success" => "Participants has been added"]));
-        return $res;
+        if(($event->participants()->where('user_id','=',$user->id)->first())===null)
+        {
+            if($event->public == 1)
+            {
+                if(($req->getAttribute('token')->user->id)!= $event->user_id)
+                    $event->participants()->attach(['user_id'=>$user->id],['present'=>true]);
+                else
+                    $event->participants()->attach(['user_id'=>$user->id]);
+            }
+            else
+                $event->participants()->attach(['user_id'=>$user->id]);
+            $res = $res->withStatus(200)
+                        ->withHeader('Content-Type', 'application/json');
+            $res->getBody()->write(json_encode(["success" => "Participants has been added"]));
+            return $res;
+        }
+        else
+        {
+            $res = $res->withStatus(409)
+                        ->withHeader('Content-Type', 'application/json');
+            $res->getBody()->write(json_encode(["error" => "This User already participate at this event"]));
+            return $res;
+        }
+        /*
+        if($event->public == 1)
+        {
+            if(($req->getAttribute('token')->user->id)!= $event->user_id)
+            {
+                if(($event->participants()->where('user_id','=',$user->id)->first())===null)
+                    $event->participants()->attach(['user_id'=>$user->id],['present'=>true]);
+            }
+            else
+                if(($event->participants()->where('user_id','=',$user->id)->first())===null)
+                    $event->participants()->attach(['user_id'=>$user->id]);
+        }
+        else
+        {
+            if(($event->participants()->where('user_id','=',$user->id)->first())===null)
+                $event->participants()->attach(['user_id'=>$user->id]);
+        }*/
+
+
     }
 
     public function responseParticipants(Request $req, Response $res, array $args): Response
