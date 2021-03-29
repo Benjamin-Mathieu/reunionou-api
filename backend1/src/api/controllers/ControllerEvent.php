@@ -191,7 +191,7 @@ class ControllerEvent
         $body = json_decode($req->getBody());
         $token = $req->getAttribute('token');
         $message = new Message;
-        $message->text = filter_var($body->text,FILTER_FULL_STRING);
+        $message->text = filter_var($body->text,FILTER_SANITIZE_STRING);
         $message->user_id = $token->user->id;
         $message->event_id = $args['id'];
         try

@@ -61,7 +61,7 @@ $app->post('/events[/]', ControllerEvent::class . ':createEvent')
 
 $app->get('/events/{id}/messages[/]', ControllerEvent::class . ':getEventsMessages');
 
-$app->post('/events/{id}/messages[/]', ControllerEvent::class.':createEventsMessages')
+$app->post('/events/{id}/messages[/]', ControllerEvent::class.':createEventsMessage')
     ->add(CheckAuthorization::class.':checkAuthorization')
     ->add(CheckJWT::class.':checkJWT');
 
