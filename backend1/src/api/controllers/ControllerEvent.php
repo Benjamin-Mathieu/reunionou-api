@@ -169,7 +169,7 @@ class ControllerEvent
     {
         try
         {
-            $event = Event::where('id', '=', $args['id'])->firstOrFail();
+            $event = Event::findOrFail($args['id']);
         }
         catch(ModelNotFoundException $e)
         {
@@ -180,9 +180,14 @@ class ControllerEvent
         }
 
         $messages = $event->messages()->get();
+        $user = $message->sender()->first();
         $res = $res->withStatus(200)
                     ->withHeader('Content-Type', 'application/json');
-        $res->getBody()->write(json_encode($messages));
+        $res->getBody()->write(json_encode(
+            [
+                "message" => $messages,
+                "user" => $user
+            ]));
         return $res;
     }
 
@@ -191,7 +196,7 @@ class ControllerEvent
         $body = json_decode($req->getBody());
         $token = $req->getAttribute('token');
         $message = new Message;
-        $message->text = filter_var($body->text,FILTER_SANITIZE_STRING);
+        $message->text = filter_var($body->text,FILTER_SANITIZE_STRING,FILTER_FLAG_NO_ENCODE_QUOTES);
         $message->user_id = $token->user->id;
         $message->event_id = $args['id'];
         try
@@ -202,7 +207,7 @@ class ControllerEvent
         {
             $res = $res->withStatus(500)
                 ->withHeader('Content-Type', 'application/json');
-            $res->getBody()->write(json_encode($e->getMessage()));
+            $res->getBody()->write(json_encode(["error" => "Intern Server Error"]));
             return $res;
         }
         $res = $res->withStatus(201)
@@ -211,6 +216,25 @@ class ControllerEvent
         return $res;
     }
 
+    public function deleteEventsMessage(Request $req, Response $res, array $args): Response
+    {
+        $message = Message::find($args['messageId']);
+        try
+        {
+            $message->delete();
+        }
+        catch(\Exception $e)
+        {
+            $res = $res->withStatus(500)
+                ->withHeader('Content-Type', 'application/json');
+            $res->getBody()->write(json_encode(["error" => "Intern Server Error"]));
+            return $res;
+        }
+        $res = $res->withStatus(200)
+                    ->withHeader('Content-Type', 'application/json');
+        $res->getBody()->write(json_encode(["success" => "This message has been deleted"]));
+        return $res;
+    }
     public function deleteEvent(Request $req, Response $res, array $args): Response
     {
         try
@@ -248,7 +272,7 @@ class ControllerEvent
         }
         $res = $res->withStatus(200)
                     ->withHeader('Content-Type', 'application/json');
-        $res->getBody()->write(json_encode(["success" => "The event has been deleted"]));
+        $res->getBody()->write(json_encode(["success" => "This event has been deleted"]));
         return $res;
     }
 
