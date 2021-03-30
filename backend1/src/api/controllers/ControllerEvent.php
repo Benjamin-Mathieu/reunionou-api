@@ -75,7 +75,7 @@ class ControllerEvent
     }
     public function getEvents(Request $req, Response $res, array $args): Response
     {
-        $events = Event::where('public', '=', 1)->orderBy('date')->take(15)->with('creator')->get();
+        $events = Event::where('public', '=', 1)->whereDate('date','>',date('Y-m-d'))->orderBy('date')->take(15)->with('creator')->get();
         $result = array();
         foreach ($events as $event) {
             unset($event->updated_at);
@@ -126,6 +126,7 @@ class ControllerEvent
                     "title" => $event->title,
                     "description" => $event->description,
                     "date" => $event->date,
+                    "token" => $event->token,
                     "user_id" => $event->user_id,
                     "adress" => $event->adress,
                     "public" => $event->public,
@@ -144,13 +145,13 @@ class ControllerEvent
         $token = $req->getAttribute('token');
         $datetime = date('Y-m-d',strtotime('+ 730 days')); //date dans 2 ans par rapport à aujourd'hui
         //Validation de la date pour que l'utilisateur puisse ajouter un evenement jusqu'a 2 ans en avance
-        if(!v::attribute('date',v::date('Y-m-d')->between('tomorrow',$datetime))->validate($body))
+        /*if(!v::attribute('date',v::date('Y-m-d')->between('tomorrow',$datetime))->validate($body))
         {
             $res = $res->withStatus(400)
                         ->withHeader('Content-Type', 'application/json');
             $res->getBody()->write(json_encode(["error" => "Wrong date Format"]));
             return $res;
-        }
+        }*/
         //Check du Body
         $body->validator = v::attribute('title',v::stringType()->length(4,80))
                             ->attribute('description', v::stringType()->length(0,200))
@@ -163,12 +164,12 @@ class ControllerEvent
             $res->getBody()->write(json_encode(["error" => "Missing Data or wrong data"]));
             return $res;
         }
-
+        
         $event = new Event;
         $event->title = filter_var($body->title, FILTER_SANITIZE_STRING,FILTER_FLAG_NO_ENCODE_QUOTES);
         $event->description = filter_var($body->description, FILTER_SANITIZE_STRING,FILTER_FLAG_NO_ENCODE_QUOTES);
         $event->date = $body->date;
-        $event->user_id = $req->getAttribute('token');
+        $event->user_id = $req->getAttribute('token')->user->id;
         $event->token = bin2hex(random_bytes(32));
         $event->adress = filter_var($body->adress, FILTER_SANITIZE_STRING,FILTER_FLAG_NO_ENCODE_QUOTES);
         $event->public = $body->public;
@@ -479,4 +480,6 @@ class ControllerEvent
         $res->getBody()->write(json_encode(["success" => "participation updated"]));
         return $res;
     }
+
+
 }

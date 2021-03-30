@@ -72,6 +72,10 @@ $app->post('/events/{id}/participants[/]', ControllerEvent::class . ':addPartici
     ->add(CheckAuthorization::class . ':checkAuthorization')
     ->add(CheckJWT::class . ':checkJWT');
 
+$app->post('/events/{id}/invite', ControllerEvent::class.':tokenInvite')
+    ->add(CheckAuthorization::class . ':checkAuthorization')
+    ->add(CheckJWT::class . ':checkJWT');
+
 $app->put('/events/{id}/response[/]', ControllerEvent::class . ':responseParticipants')
     ->add(CheckAuthorization::class . ':checkAuthorization')
     ->add(CheckJWT::class . ':checkJWT');
