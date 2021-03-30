@@ -9,6 +9,6 @@ class Message extends \Illuminate\Database\Eloquent\Model
 
     public function sender()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class,'user_id')->select(array('name','firstname','mail'));
     }
 }

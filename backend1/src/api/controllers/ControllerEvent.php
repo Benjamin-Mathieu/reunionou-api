@@ -11,6 +11,7 @@ use \atelier\api\models\User;
 use \GuzzleHttp\Client;
 use \Illuminate\Database\Eloquent\ModelNotFoundException;
 use \Illuminate\Database\QueryException;
+use Respect\Validation\Validator as v;
 
 class ControllerEvent
 {
@@ -136,16 +137,35 @@ class ControllerEvent
     {
         $body = json_decode($req->getBody());
         $token = $req->getAttribute('token');
+        $datetime = date('Y-m-d', strtotime('+ 730 days')); //date dans 2 ans par rapport à aujourd'hui
+        //Validation de la date pour que l'utilisateur puisse ajouter un evenement jusqu'a 2 ans en avance
+        if (!v::attribute('date', v::date('Y-m-d')->between('tomorrow', $datetime))->validate($body)) {
+            $res = $res->withStatus(400)
+                ->withHeader('Content-Type', 'application/json');
+            $res->getBody()->write(json_encode(["error" => "Wrong date Format"]));
+            return $res;
+        }
+        //Check du Body
+        $body->validator = v::attribute('title', v::stringType()->length(4, 80))
+            ->attribute('description', v::stringType()->length(0, 200))
+            ->attribute('public', v::boolType())
+            ->attribute('main_event', v::boolType());
+        if (!$body->validator->validate($body)) {
+            $res = $res->withStatus(400)
+                ->withHeader('Content-Type', 'application/json');
+            $res->getBody()->write(json_encode(["error" => "Missing Data or wrong data"]));
+            return $res;
+        }
+
         $event = new Event;
-        $event->title = filter_var($body->title, FILTER_SANITIZE_STRING);
+        $event->title = filter_var($body->title, FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES);
         $event->description = filter_var($body->description, FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES);
         $event->date = $body->date;
-        $event->user_id = $token->user->id;
+        $event->user_id = $req->getAttribute('token');
         $event->token = bin2hex(random_bytes(32));
-        $event->adress = filter_var($body->adress, FILTER_SANITIZE_STRING);
+        $event->adress = filter_var($body->adress, FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES);
         $event->public = $body->public;
         $event->main_event = $body->main_event;
-
         try {
             $event->save();
         } catch (\Exception $e) {
@@ -160,38 +180,89 @@ class ControllerEvent
         return $res;
     }
 
-    public function getEventsMessages(Request $req, Response $res, array $args): Response
+    public function modifEvent(Request $req, Response $res, array $args): Response
     {
+        $body = json_decode($req->getBody());
         try {
-            $event = Event::where('id', '=', $args['id'])->firstOrFail();
+            $event = Event::findOrFail($args['id']);
         } catch (ModelNotFoundException $e) {
             $res = $res->withStatus(404)
                 ->withHeader('Content-Type', 'application/json');
             $res->getBody()->write(json_encode(["error" => "Event not Found"]));
             return $res;
         }
-
-        $messages = $event->messages()->get();
+        //Check du body de la requete
+        $body->validator = v::attribute('title', v::stringType()->length(4, 80))
+            ->attribute('description', v::stringType()->length(0, 200))
+            ->attribute('public', v::boolType())
+            ->attribute('main_event', v::boolType());
+        if (!$body->validator->validate($body)) {
+            $res = $res->withStatus(400)
+                ->withHeader('Content-Type', 'application/json');
+            $res->getBody()->write(json_encode(["error" => "Missing Data or wrong data"]));
+            return $res;
+        }
+        $event->title = filter_var($body->title, FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES);
+        $event->description = filter_var($body->description, FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES);
+        $event->date = $body->date;
+        $event->adress = filter_var($body->adress, FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES);
+        $event->public = $body->public;
+        $event->main_event = $body->main_event;
+        $event->save();
         $res = $res->withStatus(200)
             ->withHeader('Content-Type', 'application/json');
-        $res->getBody()->write(json_encode($messages));
+        $res->getBody()->write(json_encode(["success" => "Event has been modified"]));
+        return $res;
+    }
+    public function getEventsMessages(Request $req, Response $res, array $args): Response
+    {
+        try {
+            $event = Event::findOrFail($args['id']);
+        } catch (ModelNotFoundException $e) {
+            $res = $res->withStatus(404)
+                ->withHeader('Content-Type', 'application/json');
+            $res->getBody()->write(json_encode(["error" => "Event not Found"]));
+            return $res;
+        }
+        $result = array();
+        $messages = $event->messages()->get();
+        foreach ($messages as $message) {
+            array_push($result, [
+                "message" => $message,
+
+
+                "user" => $message->sender()->first()
+            ]);
+        }
+        $res = $res->withStatus(200)
+            ->withHeader('Content-Type', 'application/json');
+        $res->getBody()->write(json_encode([
+            "type" => "collections",
+            "messages" => $result
+        ]));
         return $res;
     }
 
     public function createEventsMessage(Request $req, Response $res, array $args): Response
     {
-        $body = json_decode($req->getBody());
+        $bodyText = json_decode($req->getBody())->text;
+        if (!v::stringType()->length(1, 160)->validate($bodyText)) {
+            $res = $res->withStatus(400)
+                ->withHeader('Content-Type', 'application/json');
+            $res->getBody()->write(json_encode(["error" => "Missing or too long data : text"]));
+            return $res;
+        }
         $token = $req->getAttribute('token');
         $message = new Message;
-        $message->text = filter_var($body->text, FILTER_FULL_STRING);
+        $message->text = filter_var($bodyText, FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES);
         $message->user_id = $token->user->id;
-        $message->user_id = $args['id'];
+        $message->event_id = $args['id'];
         try {
             $message->save();
         } catch (\Exception $e) {
             $res = $res->withStatus(500)
                 ->withHeader('Content-Type', 'application/json');
-            $res->getBody()->write(json_encode($e->getMessage()));
+            $res->getBody()->write(json_encode(["error" => "Internal Server Error"]));
             return $res;
         }
         $res = $res->withStatus(201)
@@ -200,6 +271,53 @@ class ControllerEvent
         return $res;
     }
 
+    public function deleteEventsMessage(Request $req, Response $res, array $args): Response
+    {
+        $message = Message::find($args['messagesId']);
+        try {
+            $message->delete();
+        } catch (\Exception $e) {
+            $res = $res->withStatus(500)
+                ->withHeader('Content-Type', 'application/json');
+            $res->getBody()->write(json_encode(["error" => "Internal Server Error"]));
+            return $res;
+        }
+        $res = $res->withStatus(200)
+            ->withHeader('Content-Type', 'application/json');
+        $res->getBody()->write(json_encode(["success" => "This message has been deleted"]));
+        return $res;
+    }
+
+    public function modifEventsMessage(Request $req, Response $res, array $args): Response
+    {
+        $token = $req->getAttribute('token');
+        try {
+            $message = Message::where('id', '=', $args['messageId'])->firstOrFail();
+        } catch (ModelNotFoundException $e) {
+            $res = $res->withStatus(404)
+                ->withHeader('Content-Type', 'application/json');
+            $res->getBody()->write(json_encode(["error" => "Message Not Found"]));
+        }
+        if ($message->user_id != $token->user->id) {
+            $res = $res->withStatus(403)
+                ->withHeader('Content-Type', 'application/json');
+            $res->getBody()->write(json_encode(["error" => "You are not allowed to do that"]));
+            return $res;
+        }
+        $bodyText = json_decode($req->getBody())->text;
+        if (!v::stringType()->length(1, 160)->validate($bodyText)) {
+            $res = $res->withStatus(400)
+                ->withHeader('Content-Type', 'application/json');
+            $res->getBody()->write(json_encode(["error" => "Missing or too long data : text"]));
+            return $res;
+        }
+        $message->text = filter_var($bodyText, FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES);
+        $message->save();
+        $res = $res->withStatus(200)
+            ->withHeader('Content-Type', 'application/json');
+        $res->getBody()->write(json_encode(["success" => "This message has been edited"]));
+        return $res;
+    }
     public function deleteEvent(Request $req, Response $res, array $args): Response
     {
         try {
@@ -221,14 +339,14 @@ class ControllerEvent
                 return $res;
             }
         } else {
-            $res = $res->withStatus(401)
+            $res = $res->withStatus(403)
                 ->withHeader('Content-Type', 'application/json');
             $res->getBody()->write(json_encode(["error" => "You are not allowed to do that"]));
             return $res;
         }
         $res = $res->withStatus(200)
             ->withHeader('Content-Type', 'application/json');
-        $res->getBody()->write(json_encode(["success" => "The event has been deleted"]));
+        $res->getBody()->write(json_encode(["success" => "This event has been deleted"]));
         return $res;
     }
 
@@ -251,43 +369,55 @@ class ControllerEvent
             $res->getBody()->write(json_encode(["error" => "Event not Found"]));
             return $res;
         }
-        $event->participants()->attach(['user_id' => $user->id]);
-        $res = $res->withStatus(200)
-            ->withHeader('Content-Type', 'application/json');
-        $res->getBody()->write(json_encode(["success" => "Participants has been added"]));
-        return $res;
+        if (($event->participants()->where('user_id', '=', $user->id)->first()) === null) {
+            $event->participants()->attach(['user_id' => $user->id]);
+            $res = $res->withStatus(201)
+                ->withHeader('Content-Type', 'application/json');
+            $res->getBody()->write(json_encode(["success" => "Participants has been added"]));
+            return $res;
+        } else {
+            $res = $res->withStatus(409)
+                ->withHeader('Content-Type', 'application/json');
+            $res->getBody()->write(json_encode(["error" => "This User already participate at this event"]));
+            return $res;
+        }
     }
 
     public function responseParticipants(Request $req, Response $res, array $args): Response
     {
         $body = json_decode($req->getBody());
         $token = $req->getAttribute('token');
-        $participant = Participants::where('event_id', '=', $args['id'])->where(function ($q) use ($token) {
-            $q->where('user_id', '=', $token->user->id);
-        })->first();
-        if (is_null($participant)) {
-            $participant = new Participants;
-            $participant->user_id = $token->user->id;
-            $participant->event_id = $args['id'];
-            $participant->present = $body->response;
-            try {
-                $participant->save();
-            } catch (\Exception $e) {
-                $res = $res->withStatus(500)
-                    ->withHeader('Content-Type', 'application/json');
-                $res->getBody()->write(json_encode(["error" => "Internal Server Error"]));
-                return $res;
+        try {
+            $user = User::findOrFail($token->user->id);
+        } catch (ModelNotFoundException $e) {
+            $res = $res->withStatus(404)
+                ->withHeader('Content-Type', 'application/json');
+            $res->getBody()->write(json_encode(["error" => "User not Found"]));
+            return $res;
+        }
+        try {
+            $event = Event::findOrFail($args['id']);
+        } catch (ModelNotFoundException $e) {
+            $res = $res->withStatus(404)
+                ->withHeader('Content-Type', 'application/json');
+            $res->getBody()->write(json_encode(["error" => "Event not Found"]));
+            return $res;
+        }
+        if (!v::attribute('response', v::boolType())->validate($body)) {
+            $res = $res->withStatus(400)
+                ->withHeader('Content-Type', 'application/json');
+            $res->getBody()->write(json_encode(["error" => "Missing or wrong data"]));
+            return $res;
+        }
+        if ($event->public == 1) {
+            if ($token->user->id != $event->user_id) {
+                if (!$event->participants()->where('user_id', '=', $token->user->id)->exists())
+                    $event->participants()->attach(['user_id' => $user->id], ['present' => true]);
+                else
+                    $user->participants()->updateExistingPivot($args['id'], array('present' => $body->response));
             }
         } else {
-            $participant->present = $body->response;
-            echo $participant;
-            try {
-                $participant->save();
-            } catch (\Exception $e) {
-                $res = $res->withStatus(500)
-                    ->withHeader('Content-Type', 'application/json');
-                $res->getBody()->write(json_encode(["error" => "Internal Server Error"]));
-            }
+            $user->participants()->updateExistingPivot($args['id'], array('present' => $body->response));
         }
         $res = $res->withStatus(200)
             ->withHeader('Content-Type', 'application/json');

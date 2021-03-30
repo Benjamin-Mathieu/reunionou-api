@@ -11,6 +11,7 @@ use \atelier\api\middlewares\Cors;
 use \atelier\api\middlewares\Token;
 use \atelier\api\middlewares\CheckAuthorization;
 use \atelier\api\middlewares\CheckJWT;
+use \atelier\api\middlewares\CheckAdress;
 
 $db = new Illuminate\Database\Capsule\Manager();
 $db->addConnection($config_slim['settings']['dbconf']); /* configuration avec nos paramètres */
@@ -44,12 +45,13 @@ $app->get('/test[/]', ControllerEvent::class . ':paginationEvents');
 
 $app->get('/events/{id}', ControllerEvent::class . ':getEvent')
     ->add(CheckAuthorization::class . ':checkAuthorization')
-    ->add(Token::class . ':checkToken')
+    //->add(Token::class . ':checkToken')
     ->setName('getEvent');
 
 $app->put('/events/{id}[/]', ControllerEvent::class . ':modifEvent')
     ->add(CheckAuthorization::class . ':checkAuthorization')
-    ->add(CheckJWT::class . ':checkJWT');
+    ->add(CheckJWT::class . ':checkJWT')
+    ->add(CheckAdress::class . ':checkAdress');
 
 $app->delete('/events/{id}[/]', ControllerEvent::class . ':deleteEvent')
     ->add(CheckAuthorization::class . ':checkAuthorization')
@@ -57,11 +59,12 @@ $app->delete('/events/{id}[/]', ControllerEvent::class . ':deleteEvent')
 
 $app->post('/events[/]', ControllerEvent::class . ':createEvent')
     ->add(CheckAuthorization::class . ':checkAuthorization')
-    ->add(CheckJWT::class . ':checkJWT');
+    ->add(CheckJWT::class . ':checkJWT')
+    ->add(CheckAdress::class . ':checkAdress');
 
 $app->get('/events/{id}/messages[/]', ControllerEvent::class . ':getEventsMessages');
 
-$app->post('/events/{id}/messages[/]', ControllerEvent::class . ':postEventsMessages')
+$app->post('/events/{id}/messages[/]', ControllerEvent::class . ':createEventsMessage')
     ->add(CheckAuthorization::class . ':checkAuthorization')
     ->add(CheckJWT::class . ':checkJWT');
 
@@ -73,11 +76,11 @@ $app->put('/events/{id}/response[/]', ControllerEvent::class . ':responsePartici
     ->add(CheckAuthorization::class . ':checkAuthorization')
     ->add(CheckJWT::class . ':checkJWT');
 
-$app->put('/events/{id}/messages/{messageId}[/]', ControllerEvent::class . ':modifEventsMessages')
+$app->put('/events/{id}/messages/{messageId}[/]', ControllerEvent::class . ':modifEventsMessage')
     ->add(CheckAuthorization::class . ':checkAuthorization')
     ->add(CheckJWT::class . ':checkJWT');
 
-$app->delete('/events/{id}/messages/{messagesId}[/]', ControllerEvent::class . 'deleteEventsMessage')
+$app->delete('/events/{id}/messages/{messagesId}[/]', ControllerEvent::class . ':deleteEventsMessage')
     ->add(CheckAuthorization::class . ':checkAuthorization')
     ->add(CheckJWT::class . ':checkJWT');
 #########################################################################

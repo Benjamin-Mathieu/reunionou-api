@@ -20,6 +20,6 @@ class Event extends \Illuminate\Database\Eloquent\Model
     }
     public function messages()
     {
-        return $this->hasMany(Message::class);
+        return $this->hasMany(Message::class)->select(array('id','text','created_at','updated_at','user_id'));
     }
 }
