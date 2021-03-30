@@ -155,8 +155,8 @@ class ControllerEvent
         //Check du Body
         $body->validator = v::attribute('title',v::stringType()->length(4,80))
                             ->attribute('description', v::stringType()->length(0,200))
-                            ->attribute('public', v::boolType())
-                            ->attribute('main_event', v::boolType());
+                            ->attribute('public', v::boolVal())
+                            ->attribute('main_event', v::boolVal());
         if(!$body->validator->validate($body))
         {
             $res = $res->withStatus(400)

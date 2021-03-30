@@ -30,6 +30,24 @@ services:
     links:
       - mysql:db
 
+  api.backoffice:
+    image: canals/php:latest
+    environment:
+      - VHOST_HOSTNAME=docketu.iutnc.univ-lorraine.local
+      - VHOST_DOCROOT=/var/www/api
+#      - http_proxy=http://www-cache.iutnc.univ-lorraine.fr:3128
+#      - https_proxy=http://www-cache.iutnc.univ-lorraine.fr:3128
+    ports:
+      - "14002:80"
+      - "14003:443"
+    volumes:
+      - ./backoffice/public:/var/www/api
+      - ./backoffice/src:/var/www/src
+    working_dir: /var/www/src
+    networks:
+      - d.net
+    links:
+      - mysql:db
 ###########
 # service php / apache utilisant le vhost par défaut
 #
