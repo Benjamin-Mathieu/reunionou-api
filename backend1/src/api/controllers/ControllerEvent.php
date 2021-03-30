@@ -141,16 +141,36 @@ class ControllerEvent
     {
         $body = json_decode($req->getBody());
         $token = $req->getAttribute('token');
+        //Interrogation de l'API du gouvernement pour vérifier si l'adresse est assez précise
+        $client = new Client([
+            'base_uri' => 'https://api-adresse.data.gouv.fr/search/',
+            'verify' => false
+        ]);
+        $responseAPI = $client->get("?q=".$body->adress);
+        $bodyResponse = json_decode($responseAPI->getBody());
+        if(count($bodyResponse->features)<1)
+        {
+            $res = $res->withStatus(404)
+                        ->withHeader('Content-Type', 'application/json');
+            $res->getBody()->write(json_encode(["error" => "No adress found"]));
+            return $res;
+        }
+        else if(count($bodyResponse->features)>1)
+        {
+            $res = $res->withStatus(400)
+                        ->withHeader('Content-Type', 'application/json');
+            $res->getBody()->write(json_encode(["error" => "Adress need to be more precise or wrong adress"]));
+            return $res;
+        }
         $event = new Event;
-        $event->title = filter_var($body->title, FILTER_SANITIZE_STRING);
+        $event->title = filter_var($body->title, FILTER_SANITIZE_STRING,FILTER_FLAG_NO_ENCODE_QUOTES);
         $event->description = filter_var($body->description, FILTER_SANITIZE_STRING,FILTER_FLAG_NO_ENCODE_QUOTES);
         $event->date = $body->date;
         $event->user_id = $token->user->id;
         $event->token = bin2hex(random_bytes(32));
-        $event->adress = filter_var($body->adress, FILTER_SANITIZE_STRING);
+        $event->adress = filter_var($body->adress, FILTER_SANITIZE_STRING,FILTER_FLAG_NO_ENCODE_QUOTES);
         $event->public = $body->public;
         $event->main_event = $body->main_event;
-
         try {
             $event->save();
         } catch (\Exception $e) {
@@ -165,6 +185,32 @@ class ControllerEvent
         return $res;
     }
 
+    public function modifEvent(Request $req, Response $res, array $args): Response
+    {
+        $body = json_decode($req->getBody());
+        try
+        {
+            $event = Event::where('id','=',$args['id'])->firstOrFail();
+        }
+        catch(ModelNotFoundException $e)
+        {
+            $res = $res->withStatus(404)
+                        ->withHeader('Content-Type', 'application/json');
+            $res->getBody()->write(json_encode(["error" => "Event not Found"]));
+            return $res;
+        }
+        $event->title = filter_var($body->title, FILTER_SANITIZE_STRING,FILTER_FLAG_NO_ENCODE_QUOTES);
+        $event->description = filter_var($body->description, FILTER_SANITIZE_STRING,FILTER_FLAG_NO_ENCODE_QUOTES);
+        $event->date = $body->date;
+        $event->adress = filter_var($body->adress, FILTER_SANITIZE_STRING,FILTER_FLAG_NO_ENCODE_QUOTES);
+        $event->public = $body->public;
+        $event->main_event = $body->main_event;
+        $event->save();
+        $res = $res->withStatus(200)
+                    ->withHeader('Content-Type', 'application/json');
+        $res->getBody()->write(json_encode(["success" => "Event has been modified"]));
+        return $res;
+    }
     public function getEventsMessages(Request $req, Response $res, array $args): Response
     {
         try
@@ -310,16 +356,8 @@ class ControllerEvent
         }
         if(($event->participants()->where('user_id','=',$user->id)->first())===null)
         {
-            if($event->public == 1)
-            {
-                if(($req->getAttribute('token')->user->id)!= $event->user_id)
-                    $event->participants()->attach(['user_id'=>$user->id],['present'=>true]);
-                else
-                    $event->participants()->attach(['user_id'=>$user->id]);
-            }
-            else
-                $event->participants()->attach(['user_id'=>$user->id]);
-            $res = $res->withStatus(200)
+            $event->participants()->attach(['user_id'=>$user->id]);
+            $res = $res->withStatus(201)
                         ->withHeader('Content-Type', 'application/json');
             $res->getBody()->write(json_encode(["success" => "Participants has been added"]));
             return $res;
@@ -331,25 +369,6 @@ class ControllerEvent
             $res->getBody()->write(json_encode(["error" => "This User already participate at this event"]));
             return $res;
         }
-        /*
-        if($event->public == 1)
-        {
-            if(($req->getAttribute('token')->user->id)!= $event->user_id)
-            {
-                if(($event->participants()->where('user_id','=',$user->id)->first())===null)
-                    $event->participants()->attach(['user_id'=>$user->id],['present'=>true]);
-            }
-            else
-                if(($event->participants()->where('user_id','=',$user->id)->first())===null)
-                    $event->participants()->attach(['user_id'=>$user->id]);
-        }
-        else
-        {
-            if(($event->participants()->where('user_id','=',$user->id)->first())===null)
-                $event->participants()->attach(['user_id'=>$user->id]);
-        }*/
-
-
     }
 
     public function responseParticipants(Request $req, Response $res, array $args): Response
@@ -370,7 +389,28 @@ class ControllerEvent
             $res->getBody()->write(json_encode(["error" => "User not Found"]));
             return $res;
         }
-        $user->participants()->updateExistingPivot($args['id'],array('present'=>$body->response));
+        try
+        {
+            $event = Event::findOrFail($args['id']);
+        }
+        catch(ModelNotFoundException $e)
+        {
+            $res = $res->withStatus(404)
+                        ->withHeader('Content-Type', 'application/json');
+            $res->getBody()->write(json_encode(["error" => "Event not Found"]));
+            return $res;
+        }
+        if($event->public == 1)
+        {
+            if(($token->user->id)!= $event->user_id)
+                $event->participants()->attach(['user_id'=>$user->id],['present'=>true]);
+            else
+                $event->participants()->attach(['user_id'=>$user->id]);
+        }
+        else
+        {
+            $user->participants()->updateExistingPivot($args['id'],array('present'=>$body->response));
+        }
         $res = $res->withStatus(200)
                     ->withHeader('Content-Type', 'application/json');
         $res->getBody()->write(json_encode(["success" => "participation updated"]));
