@@ -22,25 +22,6 @@ class ControllerEvent
         $this->c = $c;
     }
 
-    public function paginationEvents(Request $req, Response $res, array $args): Response
-    {
-        $page = $req->getQueryParam('page',1);
-        if($page<=0)
-            $page = 1;
-        $size = 15; //Nombre d'evenement maximum affiché
-        $events = Event::where('public', '=', 1)->orderBy('date')->with('creator');
-        $count = $events->count();
-        $lastPage = intdiv($count,$size)+1;
-        if($page > $lastPage)
-            $page = $lastPage;
-        $rows = $events->skip(($page-1)*$size)->take($size)->get();
-        $res = $res->withStatus(200)
-                    ->withHeader('Content-Type', 'application/json');
-        $res->getBody()->write(json_encode($lastPage));
-        return $res;
-
-    }
-
     public function getPrivateEvents(Request $req, Response $res, array $args): Response
     {
         $token = $req->getAttribute('token');
@@ -52,7 +33,7 @@ class ControllerEvent
         })->orderBy('date')->take(15)->get();
         $result= array();
         foreach ($events as $event) {
-            //unset($event->updated_at);
+            unset($event->updated_at);
             array_push($result, array(
                 "event" => $event,
                 "links" => array(
@@ -143,16 +124,7 @@ class ControllerEvent
     {
         $body = json_decode($req->getBody());
         $token = $req->getAttribute('token');
-        $datetime = date('Y-m-d',strtotime('+ 730 days')); //date dans 2 ans par rapport à aujourd'hui
-        //Validation de la date pour que l'utilisateur puisse ajouter un evenement jusqu'a 2 ans en avance
-        /*if(!v::attribute('date',v::date('Y-m-d')->between('tomorrow',$datetime))->validate($body))
-        {
-            $res = $res->withStatus(400)
-                        ->withHeader('Content-Type', 'application/json');
-            $res->getBody()->write(json_encode(["error" => "Wrong date Format"]));
-            return $res;
-        }*/
-        //Check du Body
+        //$datetime = date('Y-m-d',strtotime('+ 730 days'));
         $body->validator = v::attribute('title',v::stringType()->length(4,80))
                             ->attribute('description', v::stringType()->length(0,200))
                             ->attribute('public', v::boolVal())
@@ -205,8 +177,8 @@ class ControllerEvent
         //Check du body de la requete
         $body->validator = v::attribute('title',v::stringType()->length(4,80))
                             ->attribute('description', v::stringType()->length(0,200))
-                            ->attribute('public', v::boolType())
-                            ->attribute('main_event', v::boolType());
+                            ->attribute('public', v::boolVal())
+                            ->attribute('main_event', v::boolVal());
         if(!$body->validator->validate($body))
         {
             $res = $res->withStatus(400)

@@ -14,10 +14,10 @@ services:
   api.events:
     image: canals/php:latest
     environment:
-      - VHOST_HOSTNAME=docketu.iutnc.univ-lorraine.local
+      - VHOST_HOSTNAME=docketu.iutnc.univ-lorraine.fr
       - VHOST_DOCROOT=/var/www/api
-#      - http_proxy=http://www-cache.iutnc.univ-lorraine.fr:3128
-#      - https_proxy=http://www-cache.iutnc.univ-lorraine.fr:3128
+      - http_proxy=http://www-cache.iutnc.univ-lorraine.fr:3128
+      - https_proxy=http://www-cache.iutnc.univ-lorraine.fr:3128
     ports:
       - "14000:80"
       - "14001:443"
@@ -33,10 +33,10 @@ services:
   api.backoffice:
     image: canals/php:latest
     environment:
-      - VHOST_HOSTNAME=docketu.iutnc.univ-lorraine.local
+      - VHOST_HOSTNAME=docketu.iutnc.univ-lorraine.fr
       - VHOST_DOCROOT=/var/www/api
-#      - http_proxy=http://www-cache.iutnc.univ-lorraine.fr:3128
-#      - https_proxy=http://www-cache.iutnc.univ-lorraine.fr:3128
+      - http_proxy=http://www-cache.iutnc.univ-lorraine.fr:3128
+      - https_proxy=http://www-cache.iutnc.univ-lorraine.fr:3128
     ports:
       - "14002:80"
       - "14003:443"

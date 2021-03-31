@@ -41,8 +41,6 @@ $app->get('/privateEvents[/]', ControllerEvent::class . ':getPrivateEvents')
     ->add(CheckAuthorization::class . ':checkAuthorization')
     ->add(CheckJWT::class . ':checkJWT');
 
-$app->get('/test[/]', ControllerEvent::class . ':paginationEvents');
-
 $app->get('/events/{id}', ControllerEvent::class . ':getEvent')
     ->add(CheckAuthorization::class . ':checkAuthorization')
     //->add(Token::class . ':checkToken')
@@ -69,10 +67,6 @@ $app->post('/events/{id}/messages[/]', ControllerEvent::class.':createEventsMess
     ->add(CheckJWT::class.':checkJWT');
 
 $app->post('/events/{id}/participants[/]', ControllerEvent::class . ':addParticipants')
-    ->add(CheckAuthorization::class . ':checkAuthorization')
-    ->add(CheckJWT::class . ':checkJWT');
-
-$app->post('/events/{id}/invite', ControllerEvent::class.':tokenInvite')
     ->add(CheckAuthorization::class . ':checkAuthorization')
     ->add(CheckJWT::class . ':checkJWT');
 
