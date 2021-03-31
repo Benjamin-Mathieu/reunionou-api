@@ -11,6 +11,7 @@ use Firebase\JWT\ExpiredException;
 use Firebase\JWT\SignatureInvalidException;
 use Firebase\JWT\BeforeValidException;
 use \Illuminate\Database\Eloquent\ModelNotFoundException;
+use Respect\Validation\Validator as v;
 
 class ControllerUser
 {
@@ -24,6 +25,17 @@ class ControllerUser
     public function signUp(Request $req, Response $res, array $args): Response
     {
         $body = json_decode($req->getBody());
+        $body->validator = v::attribute('name',v::stringType()->length(2,25))
+                            ->attribute('firstname', v::stringType()->length(2,25))
+                            ->attribute('mail', v::email())
+                            ->attribute('password', v::stringType());
+        if(!$body->validator->validate($body))
+        {
+            $res = $res->withStatus(400)
+                ->withHeader('Content-Type', 'application/json');
+            $res->getBody()->write(json_encode(["error" => "Missing Data or wrong data"]));
+            return $res;
+        }
         $user = new User;
         $user->mail = filter_var($body->mail, FILTER_SANITIZE_EMAIL);
         $user->name = filter_var($body->name, FILTER_SANITIZE_SPECIAL_CHARS);

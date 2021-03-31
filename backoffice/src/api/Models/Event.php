@@ -1,8 +1,9 @@
 <?php
 namespace backOffice\api\models;
-
+use Illuminate\Database\Eloquent\SoftDeletes;
 class Event extends \Illuminate\Database\Eloquent\Model
 {
+    use SoftDeletes;
     protected $table = 'event';
     protected $primaryKey = 'id';
     protected $hidden = ['deleted_at'];

@@ -29,8 +29,16 @@ $app->post('/signIn[/]', ControllerAdmin::class . ':signIn')
 $app->get('/users[/]', ControllerAdmin::class . ':getAllUsers')
     ->add(CheckAuthorization::class . ':checkAuthorization')
     ->add(CheckJWT::class. ':checkJWT');
+
+$app->delete('/users/{id}[/]', ControllerAdmin::class . ':deleteUser')
+    ->add(CheckAuthorization::class . ':checkAuthorization')
+    ->add(CheckJWT::class. ':checkJWT');
 #######################Route Events#####################################
 $app->get('/events[/]', ControllerAdmin::class . ':getAllEvents')
+    ->add(CheckAuthorization::class . ':checkAuthorization')
+    ->add(CheckJWT::class. ':checkJWT');
+
+$app->delete('/events/{id}[/]', ControllerAdmin::class . ':deleteEvent')
     ->add(CheckAuthorization::class . ':checkAuthorization')
     ->add(CheckJWT::class. ':checkJWT');
 

@@ -163,6 +163,7 @@ class ControllerEvent
     public function modifEvent(Request $req, Response $res, array $args): Response
     {
         $body = json_decode($req->getBody());
+        $token = $req->getAttribute('token');
         try
         {
             $event = Event::findOrFail($args['id']);
@@ -174,29 +175,40 @@ class ControllerEvent
             $res->getBody()->write(json_encode(["error" => "Event not Found"]));
             return $res;
         }
-        //Check du body de la requete
-        $body->validator = v::attribute('title',v::stringType()->length(4,80))
-                            ->attribute('description', v::stringType()->length(0,200))
-                            ->attribute('public', v::boolVal())
-                            ->attribute('main_event', v::boolVal());
-        if(!$body->validator->validate($body))
+        if($token->user->id == $event->user_id)
         {
-            $res = $res->withStatus(400)
+            //Check du body de la requete
+            $body->validator = v::attribute('title',v::stringType()->length(4,80))
+                                ->attribute('description', v::stringType()->length(0,200))
+                                ->attribute('public', v::boolVal())
+                                ->attribute('main_event', v::boolVal());
+            if(!$body->validator->validate($body))
+            {
+                $res = $res->withStatus(400)
                 ->withHeader('Content-Type', 'application/json');
-            $res->getBody()->write(json_encode(["error" => "Missing Data or wrong data"]));
+                $res->getBody()->write(json_encode(["error" => "Missing Data or wrong data"]));
+                return $res;
+            }
+            $event->title = filter_var($body->title, FILTER_SANITIZE_STRING,FILTER_FLAG_NO_ENCODE_QUOTES);
+            $event->description = filter_var($body->description, FILTER_SANITIZE_STRING,FILTER_FLAG_NO_ENCODE_QUOTES);
+            $event->date = $body->date;
+            $event->adress = filter_var($body->adress, FILTER_SANITIZE_STRING,FILTER_FLAG_NO_ENCODE_QUOTES);
+            $event->public = $body->public;
+            $event->main_event = $body->main_event;
+            $event->save();
+            $res = $res->withStatus(200)
+            ->withHeader('Content-Type', 'application/json');
+            $res->getBody()->write(json_encode(["success" => "Event has been modified"]));
             return $res;
         }
-        $event->title = filter_var($body->title, FILTER_SANITIZE_STRING,FILTER_FLAG_NO_ENCODE_QUOTES);
-        $event->description = filter_var($body->description, FILTER_SANITIZE_STRING,FILTER_FLAG_NO_ENCODE_QUOTES);
-        $event->date = $body->date;
-        $event->adress = filter_var($body->adress, FILTER_SANITIZE_STRING,FILTER_FLAG_NO_ENCODE_QUOTES);
-        $event->public = $body->public;
-        $event->main_event = $body->main_event;
-        $event->save();
-        $res = $res->withStatus(200)
-                    ->withHeader('Content-Type', 'application/json');
-        $res->getBody()->write(json_encode(["success" => "Event has been modified"]));
-        return $res;
+        else
+        {
+            $res = $res->withStatus(403)
+                        ->withHeader('Content-Type', 'application/json');
+            $res->getBody()->write(json_encode(["error" => "You are not allowed to do that"]));
+            return $res;
+        }
+ 
     }
     public function getEventsMessages(Request $req, Response $res, array $args): Response
     {
@@ -265,16 +277,35 @@ class ControllerEvent
 
     public function deleteEventsMessage(Request $req, Response $res, array $args): Response
     {
-        $message = Message::find($args['messagesId']);
-        try
-        {
-            $message->delete();
+        try{
+            $message = Message::findOrFail($args['messagesId']);
         }
-        catch(\Exception $e)
+        catch(ModelNotFoundException $e)
         {
-            $res = $res->withStatus(500)
-                ->withHeader('Content-Type', 'application/json');
-            $res->getBody()->write(json_encode(["error" => "Internal Server Error"]));
+            $res = $res->withStatus(404)
+                        ->withHeader('Content-Type', 'application/json');
+            $res->getBody()->write(json_encode(["error" => "Message not Found"]));
+            return $res;
+        }
+        if($message->user_id == $token->user->id)
+        {
+            try
+            {
+                $message->delete();
+            }
+            catch(\Exception $e)
+            {
+                $res = $res->withStatus(500)
+                    ->withHeader('Content-Type', 'application/json');
+                $res->getBody()->write(json_encode(["error" => "Internal Server Error"]));
+                return $res;
+            }
+        }
+        else
+        {
+            $res = $res->withStatus(403)
+                        ->withHeader('Content-Type', 'application/json');
+            $res->getBody()->write(json_encode(["error" => "You are not allowed to do that"]));
             return $res;
         }
         $res = $res->withStatus(200)

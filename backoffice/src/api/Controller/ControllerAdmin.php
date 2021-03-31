@@ -38,7 +38,7 @@ class ControllerAdmin
             }
 
             unset($user->password);
-        } catch (ModelNotFoundExecption $e) {
+        } catch (ModelNotFoundException $e) {
             $res = $res->withStatus(404)
                 ->withHeader('Content-Type', 'application/json');
             $res->getBody()->write(json_encode(["error"=>"User Not Found"]));
@@ -64,9 +64,9 @@ class ControllerAdmin
 
     public function getAllEvents(Request $req, Response $res, array $args): Response
     {
-        $events = Event::select('id','title','description','date','token','adress','user_id','public')->whereDate('date','<',date('Y-m-d',strtotime('- 31 days')))->orderBy('date')->with('creator')
-        ->whereHas('messages',function($q){
-            $q->whereDate('created_at','<',date('Y-m-d',strtotime('- 31 days')));
+        $events = Event::select('id','title','description','date','token','adress','user_id','public')->whereDate('date','<',date('Y-m-d',strtotime('- 1 days')))->orderBy('date')->with('creator')
+        ->orWhereHas('messages',function($q){
+            $q->whereDate('created_at','<',date('Y-m-d',strtotime('- 1 days')));
         })->get();
         $result = array();
         foreach ($events as $event) {
@@ -92,6 +92,66 @@ class ControllerAdmin
             "type" => "collections",
             "users" => $users
         ]));
+        return $res;
+    }
+
+    public function deleteEvent(Request $req, Response $res, array $args): Response
+    {
+        try
+        {
+            $event = Event::findOrFail($args['id']);
+        }
+        catch(ModelNotFoundException $e)
+        {
+            $res = $res->withStatus(404)
+                ->withHeader('Content-Type', 'application/json');
+            $res->getBody()->write(json_encode(["error"=>"User Not Found"]));
+            return $res;
+        }
+        try
+        {
+            $event->delete();
+        }
+        catch(\Exception $e)
+        {
+            $res = $res->withStatus(500)
+                        ->withHeader('Content-Type', 'application/json');
+            $res->getBody()->write(json_encode(["error" => "Something went wrong!, Internal Server Error"]));
+            return $res;
+        }
+        $res = $res->withStatus(200)
+        ->withHeader('Content-Type', 'application/json');
+        $res->getBody()->write(json_encode(["success" => "Event has been deleted"]));
+        return $res;
+    }
+
+    public function deleteUser(Request $req, Response $res, array $args): Response
+    {
+        try
+        {
+            $user = User::findOrFail($args['id']);
+        }
+        catch(ModelNotFoundException $e)
+        {
+            $res = $res->withStatus(404)
+                ->withHeader('Content-Type', 'application/json');
+            $res->getBody()->write(json_encode(["error"=>"User Not Found"]));
+            return $res;
+        }
+        try
+        {
+            $user->delete();
+        }
+        catch(\Exception $e)
+        {
+            $res = $res->withStatus(500)
+                        ->withHeader('Content-Type', 'application/json');
+            $res->getBody()->write(json_encode(["error" => "Something went wrong!, Internal Server Error"]));
+            return $res;
+        }
+        $res = $res->withStatus(200)
+                    ->withHeader('Content-Type', 'application/json');
+        $res->getBody()->write(json_encode(["success" => "User has been deleted"]));
         return $res;
     }
 }
