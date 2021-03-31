@@ -22,9 +22,7 @@ $c = new \Slim\Container(array_merge($config_slim, $errors));
 $app = new \Slim\App($c);
 
 $app->add(Cors::class . ':verificationAjoutHeader');
-$app->options('/{routes:.+}', function (Request $request, Response $response) {
-    return $response;
-});
+
 
 ########################Routes User#####################################
 $app->post('/signIn[/]', ControllerUser::class . ':signIn')
@@ -88,5 +86,7 @@ $app->map(['GET', 'POST', 'PUT', 'DELETE', 'PATCH'], '/{routes:.+}', function ($
     $handler = $this->notFoundHandler; // handle using the default Slim page not found handler
     return $handler($req, $res);
 });
-
+$app->options('/{routes:.+}', function (Request $request, Response $response) {
+    return $response;
+});
 $app->run();
