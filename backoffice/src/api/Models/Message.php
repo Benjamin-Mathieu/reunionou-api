@@ -1,5 +1,5 @@
 <?php
-namespace atelier\api\models;
+namespace backOffice\api\models;
 use Illuminate\Database\Eloquent\SoftDeletes;
 class Message extends \Illuminate\Database\Eloquent\Model
 {

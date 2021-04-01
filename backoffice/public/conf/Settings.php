@@ -14,7 +14,7 @@ return [
             'prefix'    => ''
 
         ],
-        'secrets' => 'efzgyiyfezuygffezfe56zfez654fez864',
+        'secrets' => 'e7224ff583f6190231f036b13a48d6de',
         "cors" => [
             "methods" => 'GET,POST,PUT,DELETE,OPTIONS',
             "headers" => 'Origin,Authorization,Content-Type,Accept,WWW-Authenticate',

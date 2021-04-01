@@ -1,3 +1,8 @@
 /backend1/src/vendor/
 /backend1/src/composer.lock
 /backend1/public/conf/Settings.php
+<<<<<<< HEAD
+=======
+/backoffice/src/vendor/
+/backoffice/src/composer.lock
+>>>>>>> 2ed7ae2085e9178b056b2f95bec6955e2ce27141

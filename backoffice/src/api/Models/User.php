@@ -1,5 +1,5 @@
 <?php
-namespace atelier\api\models;
+namespace backOffice\api\models;
 
 class User extends \Illuminate\Database\Eloquent\Model
 {
@@ -15,6 +15,6 @@ class User extends \Illuminate\Database\Eloquent\Model
 
     public function participants()
     {
-        return $this->belongsToMany('atelier\api\models\Event','atelier\api\models\Participants','user_id','event_id')->withPivot('present');
+        return $this->belongsToMany('backOffice\api\models\Event','backOffice\api\models\Participants','user_id','event_id')->withPivot('present');
     }
 }
